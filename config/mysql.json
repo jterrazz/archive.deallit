@@ -1,0 +1,9 @@
+{
+	"host": "localhost",
+	"port": 3306,
+	"user": "root",
+	"database": "my_market",
+	"connectionLimit": 100,
+	"multipleStatements": true,
+	"_comment": "password: root"
+}
