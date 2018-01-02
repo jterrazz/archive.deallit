@@ -1,0 +1,12 @@
+{
+  "name": "mymarket-server",
+  "version": "1.0.0",
+  "description": "A work on decentralized marketplaces and online commerce",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "author": "Terrazzoni Jean-Baptiste",
+  "license": "ISC"
+}
