@@ -2,7 +2,8 @@ let		g =				require('./config/global')
 
 const 	bodyParser =	require('body-parser'),
 		cors =			require('cors'),
-		responseTime =	require('response-time')
+		responseTime =	require('response-time'),
+		auth =			require('./middlewares/auth')
 
 const	express =		require('express'),
 		app =			express(),
@@ -10,6 +11,7 @@ const	express =		require('express'),
 
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({ extended: false }))
+app.use(auth.setUser)
 
 /* dev only */
 if (g.devMode) {

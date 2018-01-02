@@ -11,6 +11,6 @@ npm install
 # serve api at localhost:8081
 nodemon server.js
 
-# build for production
+# command for production
 pm2 start server.js
 ```

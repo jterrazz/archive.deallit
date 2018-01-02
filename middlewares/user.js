@@ -1,9 +1,8 @@
-const db =		require('../store/mysql')
-// escape all mysql input data
+const pool =		require('../store/mysql')
 
 const user = {
 	getInfos: (req, res, next) => {
-		db.query("SELECT * FROM users WHERE user_id=" + req.params.userId, (err, data) => {
+		pool.query("SELECT * FROM users WHERE user_id=" + pool.escape(req.params.userId), (err, data) => {
 			if (err || !data.length)
 				return res.sendStatus(400)
 			req.userSearched = data[0]

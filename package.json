@@ -10,10 +10,13 @@
   "author": "Terrazzoni Jean-Baptiste",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^1.0.3",
     "body-parser": "^1.18.2",
     "cors": "^2.8.4",
     "express": "^4.16.2",
+    "jsonwebtoken": "^8.1.0",
     "mysql": "^2.15.0",
-    "response-time": "^2.3.2"
+    "response-time": "^2.3.2",
+    "validator": "^9.2.0"
   }
 }
