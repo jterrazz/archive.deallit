@@ -1,4 +1,4 @@
-const	pool =			require('../store/mysql'),
+const	pool =			require('../store'),
 		fs =			require('fs'),
 		bcrypt =		require('bcrypt'),
 		validator =		require('validator'),
@@ -99,7 +99,7 @@ const auth = {
 		}
 		next()
 	},
-	
+
 	requireUser: (req, res, next) => {
 		if (!req.user)
 			return res.sendStatus(403)
