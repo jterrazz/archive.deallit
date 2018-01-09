@@ -33,6 +33,23 @@ router.get('/product/:productId/ratings', asyncHandler(async (req, res, next) =>
 
 router.post('/product', auth.requireUser, (req, res) => {})
 
+router.get('/products/recents', asyncHandler(async (req, res) => {
+	var products = await dbProduct.getLastItems()
+
+	res.json(products)
+}))
+
+router.post('/settings/identity', auth.requireUser, asyncHandler(async (req, res, next) => {
+	var informations = {
+		first_name: req.body.firstName,
+		last_name: req.body.lastName,
+		gender: req.body.gender,
+	}
+
+	await dbUser.updateInformations(req.user, informations)
+	res.sendStatus(200)
+}))
+
 /* Error handler */
 router.use((err, req, res, next) => {
 	console.log(err);
