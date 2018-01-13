@@ -1,5 +1,6 @@
 const	pool =		require('../store'),
-		Boom =		require('boom')
+		Boom =		require('boom'),
+		analyse =	require('../plugins/analyse')
 
 const product = {
 	getInfos: (productId) => {
@@ -10,7 +11,8 @@ const product = {
 				else if (!data.length)
 					return reject(Boom.resourceGone('Product not found in database'))
 
-				return resolve(data[0])
+				analyse.images(data)
+				resolve(data[0])
 			})
 		})
 	},
@@ -29,6 +31,7 @@ const product = {
 				if (err)
 					return reject(Boom.serverUnavailable("Couldn't get last products"))
 
+				analyse.images(data)
 				resolve(data)
 			})
 		})

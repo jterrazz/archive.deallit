@@ -1,6 +1,7 @@
 .DS_Store
 node_modules/
 npm-debug.log*
+uploads/
 
 # Editor directories and files
 .idea

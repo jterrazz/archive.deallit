@@ -2,12 +2,28 @@ const	router =			require('express').Router(),
 		Boom =				require('boom'),
 		asyncHandler =		require('../middlewares/async'),
 		auth =				require('../middlewares/auth'),
-		dbProduct =			require('../store/product')
+		upload =			require('../middlewares/upload'),
 		dbUser =			require('../store/user'),
+		dbProduct =			require('../store/product'),
+		dbMarket =			require('../store/market'),
+		uploadPlugin =		require('../plugins/upload')
 
 /* Auth */
 router.post('/auth/login', auth.login)
 router.post('/auth/register', auth.register)
+
+/* Uploads */ //require user TODO
+router.post('/upload/image', upload.handleImage, (req, res) => {
+	res.json({
+		filename: req.file.filename,
+	});
+})
+
+// TEMP
+router.post('/confirm', asyncHandler(async (req, res) => {
+	await uploadPlugin.storeFiles(['f4bf6a4ec7f1e8b7602e964096f86850s'])
+	res.end()
+}))
 
 /* User */
 router.get('/me', (req, res) => {})
@@ -18,14 +34,26 @@ router.get('/user/:userId', asyncHandler(async (req, res) => {
 	res.json(user)
 }))
 
+router.get('/user/:userId/market', asyncHandler(async (req, res) => {
+	var market = await dbMarket.getInfos(req.params.userId)
+
+	res.json(market)
+}))
+
+router.get('/user/:userId/market/products', asyncHandler(async (req, res) => {
+	var products = await dbMarket.getLastProducts(req.params.userId)
+
+	res.json(products)
+}))
+
 /* Product */
-router.get('/product/:productId', asyncHandler(async (req, res, next) => {
+router.get('/product/:productId', asyncHandler(async (req, res) => {
 	var product = await dbProduct.getInfos(req.params.productId)
 
 	res.json(product)
 }))
 
-router.get('/product/:productId/ratings', asyncHandler(async (req, res, next) => {
+router.get('/product/:productId/ratings', asyncHandler(async (req, res) => {
 	var ratings = await dbProduct.getRatings(42);
 
 	res.json(ratings)
@@ -39,7 +67,7 @@ router.get('/products/recents', asyncHandler(async (req, res) => {
 	res.json(products)
 }))
 
-router.post('/settings/identity', auth.requireUser, asyncHandler(async (req, res, next) => {
+router.post('/settings/identity', auth.requireUser, asyncHandler(async (req, res) => {
 	var informations = {
 		first_name: req.body.firstName,
 		last_name: req.body.lastName,
@@ -55,6 +83,8 @@ router.use((err, req, res, next) => {
 	console.log(err);
 	if (err.isBoom) {
 		res.status(err.output.statusCode).json(err.output.payload)
+	} else {
+		res.end()
 	}
 })
 
