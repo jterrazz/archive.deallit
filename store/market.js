@@ -18,7 +18,7 @@ module.exports = {
 	},
 	getLastProducts: async (userId) => {
 		return new Promise((resolve, reject) => {
-			pool.query("SELECT * FROM products WHERE user_id = ?", [userId], (err, ret) => {
+			pool.query("SELECT * FROM products WHERE creator_id = ?", [userId], (err, ret) => {
 				if (err)
 					return reject(err)
 

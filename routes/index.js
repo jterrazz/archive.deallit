@@ -25,6 +25,24 @@ router.post('/confirm', asyncHandler(async (req, res) => {
 	res.end()
 }))
 
+router.route('/product')
+ 	.post(auth.requireUser, asyncHandler(async (req, res) => {
+		var productId = await dbProduct.add(req.body, req.user.user_id)
+		res.json({
+			product_id: productId
+		})
+	}))
+	.patch(auth.requireUser, asyncHandler(async (req, res) => {
+		await dbProduct.patch(req.body, req.user.user_id)
+		res.sendStatus(200)
+	}))
+
+router.get('/products', asyncHandler(async (req, res) => {
+	var products = await dbProduct.getMany(req.query)
+
+	res.json(products)
+}))
+
 /* User */
 router.get('/me', (req, res) => {})
 
@@ -40,6 +58,7 @@ router.get('/user/:userId/market', asyncHandler(async (req, res) => {
 	res.json(market)
 }))
 
+//TODO Change to generic function
 router.get('/user/:userId/market/products', asyncHandler(async (req, res) => {
 	var products = await dbMarket.getLastProducts(req.params.userId)
 
@@ -59,8 +78,7 @@ router.get('/product/:productId/ratings', asyncHandler(async (req, res) => {
 	res.json(ratings)
 }))
 
-router.post('/product', auth.requireUser, (req, res) => {})
-
+//TODO Change to generic function
 router.get('/products/recents', asyncHandler(async (req, res) => {
 	var products = await dbProduct.getLastItems()
 

@@ -3,9 +3,10 @@ const	pool =			require('../store'),
 		bcrypt =		require('bcrypt'),
 		validator =		require('validator'),
 		jwt =			require('jsonwebtoken'),
-		g =				require('../config/global')
+		g =				require('../config/global'),
+		Boom =			require('boom')
 
-const	cert =			fs.readFileSync('config/secret.key')
+const	cert =			fs.readFileSync('config/jwt.key')
 
 const auth = {
 	login: (req, res, next) => {
@@ -102,7 +103,7 @@ const auth = {
 
 	requireUser: (req, res, next) => {
 		if (!req.user)
-			return res.sendStatus(403)
+			return res.sendStatus(403) // TODO better err
 		next()
 	}
 }
