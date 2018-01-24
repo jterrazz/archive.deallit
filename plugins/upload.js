@@ -57,7 +57,7 @@ const uploadToAWS = (fileName, path) => {
 			await createMainBucket()
 			await createItemObject(file, fileName)
 
-			return resolve()
+			return resolve(fileName)
 		} catch (err) {
 			return reject(err)
 		}
@@ -67,11 +67,17 @@ const uploadToAWS = (fileName, path) => {
 const upload = {}
 
 upload.storeFiles = (filesArray) => {
+	if (!filesArray || !filesArray.length)
+		return new Promise((resolve, reject) => resolve())
+
 	var ftArray = []
 
 	filesArray.forEach((filename) => {
-		ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
+		if (filename)
+			ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
 	})
+	if (!ftArray.length)
+		return new Promise((resolve, reject) => resolve())
 	return Promise.all(ftArray)
 }
 

@@ -28,7 +28,9 @@ const auth = {
 				if (err || !isValid)
 					return res.status(403).send("Incorrect password")
 
-				var payload = JSON.parse(JSON.stringify(ret[0]))
+				var payload = {
+					userId: ret[0].user_id
+				}
 				delete payload.password
 				payload.exp = Math.floor(Date.now() / 1000) + (g.tokenDuration)
 
