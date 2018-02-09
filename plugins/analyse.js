@@ -1,3 +1,5 @@
+const currenciesPlugin =	require('../plugins/currencies');
+
 module.exports = {
 	images: (toAnalyse) => {
 		toAnalyse.forEach((item) => {
@@ -29,4 +31,27 @@ module.exports = {
 				item.tags = []
 		})
 	},
+
+	currencies: (products) => {
+		return new Promise((resolve, reject) => {
+			var ftArray = [];
+
+			products.forEach(product => {
+				ftArray.push(currenciesPlugin.oneToMany(product.price_type, product.price));
+			})
+			Promise.all(ftArray)
+				.then(ret => {
+					ret.forEach((newPrices, i) => {
+						newPrices.usd = Number(newPrices.usd).toFixed(2);
+						newPrices.eur = Number(newPrices.eur).toFixed(2);
+						newPrices.btc = Number(newPrices.btc).toFixed(2);
+						products[i].prices = newPrices;
+					})
+					return resolve()
+				})
+				.catch(err => {
+					return reject(err);
+				})
+		});
+	}
 }

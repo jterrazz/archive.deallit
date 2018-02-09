@@ -23,9 +23,13 @@ const product = {
 				query += 'LEFT JOIN product_tags pt2 ON pt2.product_id=p.product_id '
 			if (filters.categorie)
 				query += 'LEFT JOIN categories c ON c.categorie_id=p.categorie_id '
+			if (filters.identifier)
+				query += 'LEFT JOIN users u ON u.user_id=p.creator_id '
 
 			if (filters.userId)
 				query += `${ whereInit++ ? 'AND' : 'WHERE' } p.creator_id=${ pool.escape(filters.userId) } `
+			if (filters.identifier)
+				query += `${ whereInit++ ? 'AND' : 'WHERE' } u.market_identifier=${ pool.escape(filters.identifier) } `
 			if (filters.tag)
 				query += `${ whereInit++ ? 'AND' : 'WHERE' } pt2.tag = ${ pool.escape(filters.tag) } `
 			if (filters.categorie)
@@ -73,20 +77,6 @@ const product = {
 				resolve(data[0])
 			})
 		})
-	},
-
-	search: (searched) => {
-		return new Promise((resolve, reject) => {
-			var query = `SELECT *, MATCH (name) AGAINST (${ pool.escape(searched) }) as score FROM products ` +
-				`WHERE MATCH (name) AGAINST (${ pool.escape(searched) }) > 0 ORDER BY score DESC;`
-
-			pool.query(query, (err, data) => {
-				if (err)
-					return reject(err)
-				analyse.images(data);
-				resolve(data)
-			})
-		});
 	},
 
 	add: (cleanProduct) => {

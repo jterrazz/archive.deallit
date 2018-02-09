@@ -9,7 +9,6 @@ const	router =			require('express').Router(),
 		checker =			require('../plugins/checker'),
 		analyse =			require('../plugins/analyse'),
 		uploadPlugin =		require('../plugins/upload'),
-		currenciesPlugin =	require('../plugins/currencies')
 		tasks =				require('../plugins/tasks');
 
 
@@ -24,9 +23,10 @@ router.post('/upload/image',auth.requireUser, upload.handleImage, (req, res) => 
 
 /* search routes */
 router.get('/s/:searched', asyncHandler(async (req, res) => {
-	if (!req.params.searched) // check is string
-		return res.sensStatus(400);
-	var products = await dbProduct.search(req.params.searched);
+	var products = await dbProduct.getMany({ search: req.params.searched });
+	analyse.images(products);
+	analyse.tags(products);
+	await analyse.currencies(products);
 
 	res.json(products);
 }))
@@ -61,11 +61,13 @@ router.route('/me')
 	}))
 
 router.get('/status', auth.requireUser, asyncHandler(async (req, res) => {
-	var userStatus = {
-		nbOrders: 4,
-		nbSells: 2,
-		nbMessages: 2
-	};
+	var userStatus = {};
+	var user = await dbUser.get(req.user.userId);
+	// TODO Query 2 times user in start ? (/me and /status)
+	// TODO Do in parallel
+
+	userStatus.nb_messages = await dbUser.getNbMessages(req.user.userId, user.seen_messages_id);
+	userStatus.nb_notifications = await dbUser.getNbNotifications(req.user.userId, user.seen_notifications_id);
 
 	res.json(userStatus);
 }))
@@ -77,10 +79,7 @@ router.get('/products', asyncHandler(async (req, res) => {
 
 	analyse.images(products);
 	analyse.tags(products);
-	products.forEach(product => {
-		product.prices = currenciesPlugin.oneToMany(product.price_type, product.price)
-	})
-	console.log(products);
+	await analyse.currencies(products);
 	res.json(products);
 }))
 
@@ -120,8 +119,7 @@ router.route('/product')
 router.route('/product/:productId')
  	.get(asyncHandler(async (req, res) => {
 		var product = await dbProduct.get(req.params.productId)
-
-		analyse.currencies([product]);
+		await analyse.currencies([product]);
 		res.json(product)
 	}))
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
@@ -130,7 +128,7 @@ router.route('/product/:productId')
 	}))
 
 router.get('/product/:productId/ratings', asyncHandler(async (req, res) => {
-	var ratings = await dbProduct.getRatings(42);
+	var ratings = await dbProduct.getRatings(req.params.productId);
 
 	res.json(ratings)
 }))
@@ -147,28 +145,36 @@ router.get('/user/:userId', asyncHandler(async (req, res) => {
 	res.json(user)
 }))
 
-router.get('/user/:userId/market', asyncHandler(async (req, res) => {
-	var market = await dbMarket.getInfos(req.params.userId)
-
-	res.json(market)
-}))
-
-router.get('/user/:userId/market/tags', asyncHandler(async (req, res) => {
-	var tags = await dbMarket.getTags(req.params.userId)
-
-	res.json(tags)
-}))
-
 router.route('/market')
 	.patch(auth.requireUser, (req, res) => {
-		var cleanMarket = checker.market(req.body)
+		var cleanMarket = checker.market(req.body);
+
+		if (Object.keys(cleanMarket).length === 0)
+			throw Boom.badData();
 
 		uploadPlugin.storeFiles([cleanMarket.market_background])
 			.then(async () => {
 				await dbMarket.patch(req.user.userId, cleanMarket);
-				res.sendStatus(200)
+				res.sendStatus(200);
 			})
 	})
+
+router.get('/user/:userId/market', asyncHandler(async (req, res) => {
+	var market = await dbMarket.get('userId', req.params.userId);
+
+	if (req.query.tags)
+		market.tags = await dbMarket.getTags(market.user_id);
+	res.json(market);
+}));
+
+router.route('/market/:identifier')
+	.get(asyncHandler(async (req, res) => {
+		var market = await dbMarket.get('identifier', req.params.identifier);
+
+		if (req.query.tags)
+			market.tags = await dbMarket.getTags(market.user_id);
+		res.json(market);
+	}))
 
 router.route('/orders')
  	.post(auth.requireUser, asyncHandler(async (req, res) => {
@@ -213,17 +219,17 @@ router.route('/messages/:contactId')
 		if (req.user.userId == req.params.contactId)
 			return res.sendStatus(400)
 		//TODO Add validator to it
-		await dbUser.postMessage(req.user.userId, req.params.contactId, message)
-		res.sendStatus(200)
+		await dbUser.postMessage(req.user.userId, req.params.contactId, message);
+		res.sendStatus(200);
 	}))
 
 /* error handler */
 router.use((err, req, res, next) => {
-	console.log(err);
 	if (err.isBoom) {
-		res.status(err.output.statusCode).json(err.output.payload)
+		res.status(err.output.statusCode).json(err.output.payload);
 	} else {
-		res.end()
+		console.log(err);
+		res.sendStatus(400);
 	}
 })
 

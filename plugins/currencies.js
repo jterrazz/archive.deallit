@@ -59,33 +59,35 @@ module.exports = {
 	},
 
 	oneToMany: function(currencyBase, priceBase) {
-		this.getRates()
-			.then(rates => {
-				switch (currencyBase) {
-					case 'eur':
-						return {
-							usd: priceBase / rates.USDEUR,
-							eur: priceBase,
-							btc: priceBase * rates.BTCEUR
-						};
-						break;
-					case 'btc':
-						return {
-							usd: priceBase / rates.BTCUSD,
-							eur: priceBase / rates.BTCEUR,
-							btc: priceBase
-						};
-						break;
-					default:
-						return {
-							usd: priceBase,
-							eur: priceBase * rates.USDEUR,
-							btc: priceBase * rates.BTCUSD
-						};
-				}
-			})
-			.catch(err => {
-				console.log(err);
-			})
+		return new Promise((resolve, reject) => {
+			this.getRates()
+				.then(rates => {
+					switch (currencyBase) {
+						case 'eur':
+							return resolve({
+								usd: priceBase / rates.USDEUR,
+								eur: priceBase,
+								btc: priceBase / rates.BTCEUR
+							});
+							break;
+						case 'btc':
+							return resolve({
+								usd: Number(priceBase * rates.BTCUSD),
+								eur: priceBase * rates.BTCEUR,
+								btc: priceBase
+							});
+							break;
+						default:
+							return resolve({
+								usd: priceBase,
+								eur: priceBase * rates.USDEUR,
+								btc: priceBase / rates.BTCUSD
+							});
+					}
+				})
+				.catch(err => {
+					reject(err);
+				})
+		});
 	}
 }

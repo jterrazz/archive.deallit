@@ -3,9 +3,9 @@ const	pool =		require('../store'),
 		analyse =	require('../plugins/analyse')
 
 module.exports = {
-	getInfos: (userId) => {
+	get: (type, id) => {
 		return new Promise((resolve, reject) => {
-			pool.query("SELECT * FROM users WHERE user_id = ?", [userId], (err, ret) => {
+			pool.query(`SELECT * FROM users WHERE ${ type == 'identifier' ? 'market_identifier' : 'user_id' } = ?`, [id], (err, ret) => {
 				if (err)
 					return reject(err)
 				else if (!ret.length)
@@ -41,5 +41,5 @@ module.exports = {
 				resolve(data)
 			})
 		});
-	}
+	},
 }

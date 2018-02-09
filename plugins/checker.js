@@ -55,6 +55,8 @@ module.exports = {
 
 		if (raw.marketBackground)
 			clean.market_background = raw.marketBackground;
+		if (raw.identifier && validator.isAlpha(raw.identifier))
+			clean.market_identifier = raw.identifier; // TODO Check available adn not already set less than 1 month ago
 
 		return clean;
 	},

@@ -36,25 +36,27 @@ const user = {
 
 	getConversations: (userId) => {
 		return new Promise((resolve, reject) => {
-			// var query = "SELECT m.*, u.user_image, u.first_name, u.last_name " +
-			// 	"FROM messages m LEFT JOIN users u ON u.user_id=m.from_id " +
-			// 	"WHERE m.from_id=? OR m.to_id=? GROUP BY m.from_id";
-            //
-			// pool.query(query, [userId, userId], (err, data) => {
-			// 	if (err)
-			// 		return reject(err);
-			// 	analyse.images(data);
-				// resolve(data);
-			// })
-			resolve([])
+			var query = "SELECT m.*, u.user_id, u.first_name, u.last_name, u.user_image FROM messages m " +
+				`LEFT JOIN users u ON u.user_id=m.from_id AND m.from_id != ? ` +
+				`OR u.user_id=m.to_id AND m.to_id != ? ` +
+				"WHERE m.message_id IN (" +
+					"SELECT max(m.message_id) FROM messages m WHERE to_id = ? OR from_id = ? GROUP BY least(m.to_id, m.from_id), greatest(m.to_id, m.from_id)" +
+				") ORDER BY m.message_id DESC";
+
+			pool.query(query, [userId, userId, userId, userId], (err, data) => {
+				if (err)
+					return reject(err);
+				analyse.images(data);
+				resolve(data);
+			})
 		})
 	},
 
 	getMessages: (userId, contactId) => {
 		return new Promise((resolve, reject) => {
-			var query = "SELECT * FROM messages WHERE (user_id=? AND contact_id=?) OR (user_id=? AND contact_id=?) LIMIT 20";
+			var query = "SELECT * FROM messages m WHERE ? IN (m.from_id, m.to_id) AND ? IN (m.from_id, m.to_id) LIMIT 20";
 
-			pool.query(query, [userId, contactId, contactId, userId], (err, data) => {
+			pool.query(query, [userId, contactId], (err, data) => {
 				if (err)
 					return reject(err)
 				resolve(data)
@@ -62,12 +64,12 @@ const user = {
 		})
 	},
 
-	postMessage: (userId, contactId, message) => {
+	postMessage: (fromId, toId, message) => {
 		return new Promise((resolve, reject) => {
 			var data = {
 				message: message,
-				user_id: userId,
-				contact_id: contactId
+				from_id: fromId,
+				to_id: toId
 			}
 			pool.query("INSERT INTO messages SET ?", [data], (err, data) => {
 				if (err)
@@ -131,7 +133,37 @@ const user = {
 
 	deleteUser: (userId) => {
 
-	}
+	},
+
+	getNbMessages: (userId, lastId) => {
+		return new Promise(function(resolve, reject) {
+			var query = "SELECT COUNT(message_id) AS nb_messages FROM messages WHERE message_id>? AND to_id=?";
+			lastId = lastId ? lastId : 0;
+
+			pool.query(query, [lastId, userId], (err, data) => {
+				if (err)
+					return reject(err);
+				else if (!data.length)
+					return reject(Boom.notAcceptable());
+				resolve(data[0].nb_messages);
+			});
+		});
+	},
+
+	getNbNotifications: (userId, lastId) => {
+		return new Promise(function(resolve, reject) {
+			var query = "SELECT COUNT(notification_id) AS nb_notifications FROM notifications WHERE notification_id>? AND user_id=?";
+			lastId = lastId ? lastId : 0;
+
+			pool.query(query, [lastId, userId], (err, data) => {
+				if (err)
+					return reject(err);
+				else if (!data.length)
+					return reject(Boom.notAcceptable());
+				resolve(data[0].nb_notifications);
+			});
+		});
+	},
 }
 
 module.exports = user
