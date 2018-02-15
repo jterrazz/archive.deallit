@@ -6,7 +6,7 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-// TODO Do the update after 1 one with timeout + save in local variable
+// TODO:80 Do the update after 1 one with timeout + save in local variable
 
 getCurrencies()
 setInterval(getCurrencies, 1000 * 60 * 1);

@@ -52,6 +52,18 @@ const user = {
 		})
 	},
 
+	getNotifications: (userId) => {
+		return new Promise((resolve, reject) => {
+			var query = "SELECT * FROM user_notifications WHERE user_id=?"
+
+			pool.query(query, [userId], (err, data) => {
+				if (err)
+					return reject(err)
+				resolve(data)
+			})
+		});
+	},
+
 	getMessages: (userId, contactId) => {
 		return new Promise((resolve, reject) => {
 			var query = "SELECT * FROM messages m WHERE ? IN (m.from_id, m.to_id) AND ? IN (m.from_id, m.to_id) LIMIT 20";
@@ -91,7 +103,7 @@ const user = {
 				else if (data.affectedRows !== 1)
 					return Boom.notAcceptable();
 
-				//TODO Update product quantity
+				//TODO:120 Update product quantity
 				return resolve();
 			})
 		});
@@ -152,7 +164,7 @@ const user = {
 
 	getNbNotifications: (userId, lastId) => {
 		return new Promise(function(resolve, reject) {
-			var query = "SELECT COUNT(notification_id) AS nb_notifications FROM notifications WHERE notification_id>? AND user_id=?";
+			var query = "SELECT COUNT(notification_id) AS nb_notifications FROM user_notifications WHERE notification_id>? AND user_id=?";
 			lastId = lastId ? lastId : 0;
 
 			pool.query(query, [lastId, userId], (err, data) => {

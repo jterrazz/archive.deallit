@@ -105,11 +105,11 @@ const auth = {
 
 	requireUser: (req, res, next) => {
 		if (!req.user)
-			return res.sendStatus(403) // TODO better err
+			return res.sendStatus(403) // TODO:140 better err
 		next()
 	}
 }
 
-// TODO case where 2 users create user at same time -> do unique key in mysql for mail user
+// TODO:150 case where 2 users create user at same time -> do unique key in mysql for mail user
 
 module.exports = auth

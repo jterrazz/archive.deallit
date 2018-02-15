@@ -11,7 +11,7 @@ module.exports = {
 				else if (!ret.length)
 					return reject(Boom.resourceGone('User not found in db'))
 
-				//TODO remove password from data !!!!!!!!!! (SELECT ONLY USEFULL)
+				//TODO:180 remove password from data !!!!!!!!!! (SELECT ONLY USEFULL)
 				analyse.images(ret)
 				resolve(ret[0])
 			})

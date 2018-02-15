@@ -32,8 +32,8 @@ const server = http.listen(g.port, () => {
 	console.log("\x1b[32mServer is running on port :\x1b[0m " + server.address().port + " 👍")
 })
 
-//TODO all currency converted server side --> redis store currencies
-//TODO Check all routes are number or escaped
-//TODO Not found page
-//TODO Cancel order
+//TODO:130 all currency converted server side --> redis store currencies
+//TODO:20 Check all routes are number or escaped
+//TODO:90 Not found page
+//TODO:10 Cancel order
 // REfactoring routes avec analyse in routes et uniquement db in db

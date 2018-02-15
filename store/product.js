@@ -103,7 +103,8 @@ const product = {
 		})
 	},
 
-	// TODO REMOVE ALSO THE TAGS !!!!!!!!!!!!
+	// TODO:110 REMOVE ALSO THE TAGS !!!!!!!!!!!!
+	// TODO DELETE ALL PHOTOS FROM S3
 	delete: (userId, productId) => {
 		return new Promise((resolve, reject) => {
 			pool.query("DELETE FROM products WHERE product_id=? AND creator_id=?", [productId, userId], (err, data) => {
@@ -116,7 +117,7 @@ const product = {
 		})
 	},
 
-	// TODO Do better than that lol
+	// TODO:60 Do better than that lol
 	updateTags: (productId, body) => {
 		return new Promise((resolve, reject) => {
 			var tags = body.tags,

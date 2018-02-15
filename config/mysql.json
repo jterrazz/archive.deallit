@@ -2,7 +2,8 @@
 	"host": "localhost",
 	"port": 3306,
 	"user": "root",
-	"database": "my_market",
+	"password": "Corsica20",
+	"database": "mymarket",
 	"connectionLimit": 100,
 	"multipleStatements": true
 }

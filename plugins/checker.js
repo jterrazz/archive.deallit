@@ -3,21 +3,21 @@ const validator =	require('validator')
 module.exports = {
 	product: (product) => {
 		var cleanProduct = {};
-
+		//TODO Handle error returns
 		if (!product)
 			return null;
 
 		if (product.price)
-			cleanProduct.price = product.price; // TODO check is number
-		if (product.priceType) // TODO in USD EUR BTC
+			cleanProduct.price = product.price; // TODO:160 check is number
+		if (product.priceType) // TODO:170 in USD EUR BTC
 			cleanProduct.price_type = product.priceType
 
-		if (product.name && (!validator.isAscii(product.name) || !validator.isLength(product.name, { min: 10, max: 256 })))
+		if (product.name && !validator.isAscii(product.name))
 			return null;
 		else if (product.name)
 			cleanProduct.name = validator.escape(product.name);
 
-		if (product.description && (!validator.isLength(product.description, { min: 0, max: 256 })))
+		if (product.description && !validator.isAscii(product.description))
 			return null
 		else if (product.description)
 			cleanProduct.description = validator.escape(product.description);
@@ -44,7 +44,7 @@ module.exports = {
 			clean.gender = raw.gender;
 		if (raw.userImage)
 			clean.user_image = raw.userImage;
-		if (raw.currency) //TODO Check only in list
+		if (raw.currency) //TODO:50 Check only in list
 			clean.currency = raw.currency;
 
 		return clean;
@@ -56,7 +56,7 @@ module.exports = {
 		if (raw.marketBackground)
 			clean.market_background = raw.marketBackground;
 		if (raw.identifier && validator.isAlpha(raw.identifier))
-			clean.market_identifier = raw.identifier; // TODO Check available adn not already set less than 1 month ago
+			clean.market_identifier = raw.identifier; // TODO:30 Check available adn not already set less than 1 month ago
 
 		return clean;
 	},

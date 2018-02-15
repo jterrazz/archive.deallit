@@ -12,10 +12,10 @@ const	router =			require('express').Router(),
 		tasks =				require('../plugins/tasks');
 
 
-// TODO require user and check user equal change
+// TODO:190 require user and check user equal change
 
 /* uploads routes */
-router.post('/upload/image',auth.requireUser, upload.handleImage, (req, res) => {
+router.post('/upload/image', auth.requireUser, upload.handleImage, (req, res) => {
 	res.json({
 		filename: req.file.filename,
 	});
@@ -63,8 +63,8 @@ router.route('/me')
 router.get('/status', auth.requireUser, asyncHandler(async (req, res) => {
 	var userStatus = {};
 	var user = await dbUser.get(req.user.userId);
-	// TODO Query 2 times user in start ? (/me and /status)
-	// TODO Do in parallel
+	// TODO:100 Query 2 times user in start ? (/me and /status)
+	// TODO:70 Do in parallel
 
 	userStatus.nb_messages = await dbUser.getNbMessages(req.user.userId, user.seen_messages_id);
 	userStatus.nb_notifications = await dbUser.getNbNotifications(req.user.userId, user.seen_notifications_id);
@@ -72,6 +72,18 @@ router.get('/status', auth.requireUser, asyncHandler(async (req, res) => {
 	res.json(userStatus);
 }))
 
+router.get('/conversations', auth.requireUser, asyncHandler(async (req, res) => {
+	var conversations = await dbUser.getConversations(req.user.userId);
+
+	res.json(conversations)
+}))
+
+router.get('/notifications', auth.requireUser, asyncHandler(async (req, res) => {
+	var notifications = await dbUser.getNotifications(req.user.userId);
+
+	analyse.setNotifications(notifications);
+	res.json(notifications);
+}))
 
 /* product routes */
 router.get('/products', asyncHandler(async (req, res) => {
@@ -88,7 +100,7 @@ router.route('/product')
 		var cleanProduct = checker.product(req.body)
 
 		if (!cleanProduct)
-			return reject(Boom.badData())
+			return Boom.badData();
 
 		cleanProduct.creator_id = req.user.userId;
 
@@ -109,7 +121,7 @@ router.route('/product')
 	.patch(auth.requireUser, asyncHandler(async (req, res) => {
 		var cleanProduct = checker.product(req.body)
 		if (!cleanProduct)
-			return reject(Boom.badData())
+			return;
 
 		delete cleanProduct.images
 		await dbProduct.patch(cleanProduct, req.user.userId, req.body.productId)
@@ -119,11 +131,13 @@ router.route('/product')
 router.route('/product/:productId')
  	.get(asyncHandler(async (req, res) => {
 		var product = await dbProduct.get(req.params.productId)
+
 		await analyse.currencies([product]);
 		res.json(product)
 	}))
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
 		await dbProduct.delete(req.user.userId, req.params.productId);
+
 		res.sendStatus(200)
 	}))
 
@@ -195,17 +209,11 @@ router.route('/order/:orderId')
 		res.json(order);
 	}))
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
-		//TODO Check is possible and userid ok
+		//TODO:40 Check is possible and userid ok
 		await dbUser.cancelOrder(req.user.userId, req.params.orderId)
 
 		res.sendStatus(200)
 	}))
-
-router.get('/conversations', auth.requireUser, asyncHandler(async (req, res) => {
-	var conversations = await dbUser.getConversations(req.user.userId);
-
-	res.json(conversations)
-}))
 
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
@@ -218,7 +226,7 @@ router.route('/messages/:contactId')
 		var message = req.body.message;
 		if (req.user.userId == req.params.contactId)
 			return res.sendStatus(400)
-		//TODO Add validator to it
+		//#Security:0 Add validator to it
 		await dbUser.postMessage(req.user.userId, req.params.contactId, message);
 		res.sendStatus(200);
 	}))

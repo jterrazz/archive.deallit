@@ -1,6 +1,25 @@
 const currenciesPlugin =	require('../plugins/currencies');
 
 module.exports = {
+	setNotifications: (notifications) => {
+		notifications.forEach(notification => {
+			try {
+				var params = JSON.parse(notification.params);
+			} catch (e) {
+				var params = {};
+			}
+			switch (notification.type) {
+				case 'welcome-1':
+					notification.message = "Bienvenue sur my market, commencez des maintenant a vendre vos objects"
+					break;
+				case 'order-transmitted-1':
+					notification.message = `The order of ${ params.order_id } `
+					notification.link = `/orders/${ params.order_id }`
+					break;
+			}
+		})
+	},
+
 	images: (toAnalyse) => {
 		toAnalyse.forEach((item) => {
 			if (item.market_background)
