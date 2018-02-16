@@ -36,4 +36,5 @@ const server = http.listen(g.port, () => {
 //TODO:20 Check all routes are number or escaped
 //TODO:90 Not found page
 //TODO:10 Cancel order
+// TODO Do store list in home and categories
 // REfactoring routes avec analyse in routes et uniquement db in db

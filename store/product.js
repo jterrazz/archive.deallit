@@ -123,6 +123,9 @@ const product = {
 			var tags = body.tags,
 			queryTags = [];
 
+			if (!tags)
+				return reject()
+
 			tags.forEach((tag) => {
 				queryTags.push([productId, tag])
 			})

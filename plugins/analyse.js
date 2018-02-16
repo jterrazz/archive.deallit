@@ -8,6 +8,7 @@ module.exports = {
 			} catch (e) {
 				var params = {};
 			}
+			notification.link = '#'
 			switch (notification.type) {
 				case 'welcome-1':
 					notification.message = "Bienvenue sur my market, commencez des maintenant a vendre vos objects"
