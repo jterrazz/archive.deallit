@@ -1,4 +1,5 @@
 const	router =			require('express').Router(),
+		g =					require('../config/global'),
 		Boom =				require('boom'),
 		asyncHandler =		require('../middlewares/async'),
 		auth =				require('../middlewares/auth'),
@@ -9,10 +10,27 @@ const	router =			require('express').Router(),
 		checker =			require('../plugins/checker'),
 		analyse =			require('../plugins/analyse'),
 		uploadPlugin =		require('../plugins/upload'),
+		bitcoinPlugin =		require('../plugins/bitcoin'),
 		tasks =				require('../plugins/tasks');
 
-
 // TODO:190 require user and check user equal change
+
+// TEMP REMOVE AFTER !!!!!
+router.post("/createWallets", (req,res) => {
+	var type = g.devMode ? 'bitcoint' : 'bitcoin';
+
+	bitcoinPlugin.createRandomWIF(wif => {
+		bitcoinPlugin.getLegacyAddress(wif, publicAddress => {
+			dbUser.saveWallet(type, 5, publicAddress, wif, false);
+		})
+	});
+	bitcoinPlugin.createRandomWIF(wif => {
+		bitcoinPlugin.getSegwitAddress(wif, publicAddress => {
+			dbUser.saveWallet(type, 5, publicAddress, wif, true);
+		})
+	});
+	res.end();
+})
 
 /* uploads routes */
 router.post('/upload/image', auth.requireUser, upload.handleImage, (req, res) => {
@@ -199,6 +217,7 @@ router.route('/orders')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
 		var orders = await dbUser.getOrders(req.user.userId);
 
+		analyse.images(orders);
 		res.json(orders)
 	}))
 

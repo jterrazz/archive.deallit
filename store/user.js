@@ -1,6 +1,6 @@
 const	pool =		require('../store'),
 		analyse =	require('../plugins/analyse'),
-		Boom =		require('boom')
+		Boom =		require('boom');
 
 const user = {
 	get: (userId) => {
@@ -176,6 +176,21 @@ const user = {
 			});
 		});
 	},
+
+	saveWallet: (type, userId, publicAddress, wif, isSegwit) => {
+		return new Promise(function(resolve, reject) {
+			var query = "INSERT INTO user_wallets SET ?";
+			var dataSql = { type, user_id: userId, publicAddress, wif, isSegwit };
+
+			pool.query(query, dataSql, (err, data) => {
+				if (err)
+					return reject(err);
+				else if (!data.affectedRows)
+					return (Boom.notAcceptable());
+				resolve();
+			})
+		});
+	}
 }
 
-module.exports = user
+module.exports = user;
