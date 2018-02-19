@@ -3,7 +3,7 @@ const	pool =			require('../store'),
 		bcrypt =		require('bcrypt'),
 		validator =		require('validator'),
 		jwt =			require('jsonwebtoken'),
-		g =				require('../config/global'),
+		g =				require('../config/env'),
 		Boom =			require('boom')
 
 const	cert =			fs.readFileSync('config/jwt.key')

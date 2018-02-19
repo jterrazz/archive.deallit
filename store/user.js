@@ -190,6 +190,64 @@ const user = {
 				resolve();
 			})
 		});
+	},
+
+	getWalletForUser: (userId, currency, isSegwit) => {
+		return new Promise(function(resolve, reject) {
+			var query = "SELECT w.public_address FROM user_wallets w " +
+			"WHERE w.user_id=? AND w.type=? AND w.is_segwit=? ORDER BY w.wallet_id DESC LIMIT 1";
+
+			pool.query(query, [userId, currency, isSegwit], (err, data) => {
+				if (err)
+					return reject(err);
+				else if (data.length !== 1)
+					return reject(Boom.notAcceptable())
+				resolve(data[0])
+			})
+		});
+	},
+
+	getUserForWalletAdresses: (adresses) => {
+		return new Promise(function(resolve, reject) {
+			var query = "SELECT user_id FROM user_wallets WHERE public_address IN (?)";
+
+			pool.query(query, [adresses], (err, data) => {
+				if (err)
+					return reject(err);
+				else if (data.length !== 1)
+					return reject(Boom.notAcceptable)
+				resolve(data[0].user_id);
+			})
+		});
+	},
+
+	saveDeposit: (userId, type, hash, value) => {
+		return new Promise(function(resolve, reject) {
+			pool.query("INSERT INTO user_deposits SET ?", { value, user_id: userId, type, hash }, (err, data) => {
+				if (err)
+					return reject(console.log(err));
+				else if (data.affectedRows != 1)
+					return reject(Boom.notAcceptable());
+
+				var query = "";
+				switch (type) {
+					case 'BTC':
+						query = "UPDATE users SET BTC_amount = BTC_amount + ? WHERE user_id=?";
+						break;
+					case 'tBTC':
+						query = "UPDATE users SET tBTC_amount = tBTC_amount + ? WHERE user_id=?";
+						break;
+					default:
+						return reject(Boom.notAcceptable())
+				}
+
+				pool.query(query, [value, userId], (err, data) => {
+					if (err)
+						return reject(err)
+					resolve(true)
+				})
+			})
+		});
 	}
 }
 

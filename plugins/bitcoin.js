@@ -1,5 +1,8 @@
-const	bitcoin =	require('bitcoinjs-lib'),
-		g =			require('../config/global');
+const	g =				require('../config/env'),
+		axios =			require('axios'),
+		bitcoin =		require('bitcoinjs-lib');
+		// BitcoinCore =	require('bitcoin-core'),
+		// client = 		new BitcoinCore({ network: 'regtest', username: g.bitcoinUser, password: g.bitcoinPassword })
 
 const	network = g.devMode ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
 

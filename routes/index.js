@@ -1,5 +1,5 @@
 const	router =			require('express').Router(),
-		g =					require('../config/global'),
+		g =					require('../config/env'),
 		Boom =				require('boom'),
 		asyncHandler =		require('../middlewares/async'),
 		auth =				require('../middlewares/auth'),
@@ -233,6 +233,20 @@ router.route('/order/:orderId')
 
 		res.sendStatus(200)
 	}))
+
+router.get('/wallet/:currency', auth.requireUser, asyncHandler((req, res) => {
+	var currency = req.params.currency;
+
+	//TODO Check is in BTC tBTC ETH ...
+	dbUser.getWalletForUser(req.user.userId, currency, false)
+		.then(data => {
+			res.json(data)
+		})
+		.catch(err => {
+			//if user dont have wallet create it
+			console.log(err);
+		})
+}))
 
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
