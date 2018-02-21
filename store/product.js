@@ -1,9 +1,8 @@
 const	pool =		require('../store'),
 		Boom =		require('boom'),
-		analyse =	require('../plugins/analyse'),
-		validator =	require('validator'),
-		checker =	require('../plugins/checker'),
-		upload =	require('../plugins/upload');
+		analyzer =	require('../plugins/analyzer'),
+		snakeCaseKeys = require('snakecase-keys'),
+		validator =	require('validator');
 
 const product = {
 	getMany: (filters) => {
@@ -73,15 +72,15 @@ const product = {
 				else if (!data.length)
 					return reject(Boom.resourceGone('Product not found in database'))
 
-				analyse.images(data)
+				analyzer.imagesURL(data)
 				resolve(data[0])
 			})
 		})
 	},
 
-	add: (cleanProduct) => {
+	add: (product) => {
 		return new Promise((resolve, reject) => {
-			pool.query("INSERT INTO products SET ?", [cleanProduct], (err, ret) => {
+			pool.query("INSERT INTO products SET ?", [snakeCaseKeys(product)], (err, ret) => {
 				if (err)
 					return reject(err)
 				else if (!ret.insertId)
@@ -91,20 +90,22 @@ const product = {
 		})
 	},
 
-	patch: (product, userId, productId) => {
+	patch: (userId, productId, product) => {
 		return new Promise((resolve, reject) => {
-			var query = "UPDATE products SET ? WHERE creator_id=? AND product_id=?";
+			var query = "UPDATE products SET ? WHERE creator_id = ? AND product_id = ?";
 
-			pool.query(query, [product, userId, productId], (err, data) => {
+			pool.query(query, [snakeCaseKeys(product), userId, productId], (err, ret) => {
 				if (err)
 					return reject(err);
+				else if (!ret.affectedRows)
+					return reject(Boom.notFound("No product found"));
 				return resolve();
 			})
 		})
 	},
 
-	// TODO:110 REMOVE ALSO THE TAGS !!!!!!!!!!!!
-	// TODO DELETE ALL PHOTOS FROM S3
+	// TODO:200 REMOVE ALSO THE TAGS !!!!!!!!!!!!
+	// TODO:60 DELETE ALL PHOTOS FROM S3
 	delete: (userId, productId) => {
 		return new Promise((resolve, reject) => {
 			pool.query("DELETE FROM products WHERE product_id=? AND creator_id=?", [productId, userId], (err, data) => {
@@ -117,7 +118,7 @@ const product = {
 		})
 	},
 
-	// TODO:60 Do better than that lol
+	// TODO:150 Do better than that lol
 	updateTags: (productId, body) => {
 		return new Promise((resolve, reject) => {
 			var tags = body.tags,

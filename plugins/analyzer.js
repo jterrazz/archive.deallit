@@ -1,7 +1,12 @@
-const currenciesPlugin =	require('../plugins/currencies');
+const currenciesPlugin = require('../plugins/currencies');
+const env = require('../config/env');
+
+const imagesFolder = env.staticServerUrl + 'public/images/';
 
 module.exports = {
-	setNotifications: (notifications) => {
+
+	//TODO:30 Do all notifications
+	decodeNotifications: (notifications) => {
 		notifications.forEach(notification => {
 			try {
 				var params = JSON.parse(notification.params);
@@ -21,30 +26,32 @@ module.exports = {
 		})
 	},
 
-	images: (toAnalyse) => {
-		toAnalyse.forEach((item) => {
-			if (item.market_background)
-				item.market_background = 'https://s3.eu-west-3.amazonaws.com/the-crypto-market/public/images/' + item.market_background
-			if (item.image)
-				item.image = 'https://s3.eu-west-3.amazonaws.com/the-crypto-market/public/images/' + item.image
-			if (item.user_image)
-				item.user_image = 'https://s3.eu-west-3.amazonaws.com/the-crypto-market/public/images/' + item.user_image
+	imagesURL: (arrayToAnalyse) => {
+		const imageKeys = ['market_background', 'image', 'user_image'];
+
+		arrayToAnalyse.forEach(item => {
+			imageKeys.forEach(key => {
+				if (item[key])
+					item[key] = imagesFolder + item[key];
+			})
+
 			try {
-				item.images = JSON.parse(item.images)
-				if (item.images){
+				item.images = JSON.parse(item.images);
+				if (Array.isArray(item.images)) {
 					item.images.forEach((image, i) => {
-						item.images[i] = 'https://s3.eu-west-3.amazonaws.com/the-crypto-market/public/images/' + image
-						item.preview = 'https://s3.eu-west-3.amazonaws.com/the-crypto-market/public/images/' + image
+						item.images[i] = imagesFolder + image;
+						if (!i)
+							item.preview = imagesFolder + image;
 					})
 				}
 			} catch (e) {
-				item.images = null
+				item.images = null;
 			}
 		})
 	},
 
-	tags: (toAnalyse) => {
-		toAnalyse.forEach(item => {
+	tags: (arrayToAnalyse) => {
+		arrayToAnalyse.forEach(item => {
 			if (item.tags)
 				item.tags = item.tags.split(',')
 			else

@@ -1,18 +1,16 @@
 const	AWS =			require('aws-sdk'),
 		path =			require('path'),
-		fs =			require('fs');
+		fs =			require('fs'),
+		env =			require('../config/env');
 
 AWS.config.loadFromPath('config/aws.json');
 
-const	s3 =			new AWS.S3({region: 'eu-west-2'}),
-		bucketName =	'the-crypto-market';
-
-/* AWS methods */
+const s3 = new AWS.S3({ region: 'eu-west-2' });
 
 const createMainBucket = () => {
 	return new Promise((resolve, reject) => {
 		const bucketParams = {
-			Bucket: bucketName
+			Bucket: env.AWS_BUCKET_NAME
 		};
 
 		s3.headBucket(bucketParams, (err, data) => {
@@ -32,7 +30,7 @@ const createMainBucket = () => {
 const createItemObject = (file, fileName) => {
 	return new Promise((resolve, reject) => {
 		const params = {
-			Bucket: bucketName,
+			Bucket: env.AWS_BUCKET_NAME,
 			Key: `public/images/${ fileName }`,
 			ACL: 'public-read',
 			Body: file
@@ -64,21 +62,17 @@ const uploadToAWS = (fileName, path) => {
 	})
 }
 
-const upload = {}
+module.exports = {
+	sendFiles: (filesArray) => {
+		var ftArray = [];
 
-upload.storeFiles = (filesArray) => {
-	if (!filesArray || !filesArray.length)
-		return new Promise((resolve, reject) => resolve())
+		if (!filesArray || !filesArray.length) // Also check names files are correct
+			return new Promise((resolve, reject) => resolve())
 
-	var ftArray = []
-
-	filesArray.forEach((filename) => {
-		if (filename)
+		filesArray.forEach((filename) => {
 			ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
-	})
-	if (!ftArray.length)
-		return new Promise((resolve, reject) => resolve())
-	return Promise.all(ftArray)
-}
+		});
 
-module.exports = upload
+		return Promise.all(ftArray);
+	}
+}

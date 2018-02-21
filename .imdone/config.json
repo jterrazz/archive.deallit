@@ -26,7 +26,15 @@
       "hidden": false
     },
     {
+      "name": "Important",
+      "hidden": false
+    },
+    {
       "name": "Security",
+      "hidden": false
+    },
+    {
+      "name": "Cleaning",
       "hidden": false
     }
   ],

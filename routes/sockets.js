@@ -18,17 +18,16 @@ blocktrailClient =		blocktrail.BlocktrailSDK({
 // });
 
 io.on('connection', function(client) {
-	client.on('monitor-payment', function(data) {
-		var userId = 5;
-		var orderId = data.orderId;
-
-		Events.on(`user-${ userId }:bitcoin-transaction`, function(transaction) {
-			client.emit('bitcoin-transaction', transaction);
+	client.on('monitor-payments', function(userId) {
+		Events.on(`user-${ userId }:deposit`, function(transaction) {
+			client.emit('deposit', transaction);
 		});
 
-		client.on('disconnect', function() {
+		Events.on(`user-${ userId }:order-confirmation`, function(orders) {
+			client.emit('order-confirmation', orders);
+		})
 
-		});
+		client.on('disconnect', function() {});
 	})
 });
 

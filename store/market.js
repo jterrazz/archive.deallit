@@ -1,6 +1,7 @@
 const	pool =		require('../store'),
 		Boom =		require('boom'),
-		analyse =	require('../plugins/analyse')
+		snakeCaseKeys = require('snakecase-keys'),
+		analyzer =	require('../plugins/analyzer')
 
 module.exports = {
 	get: (type, id) => {
@@ -11,8 +12,8 @@ module.exports = {
 				else if (!ret.length)
 					return reject(Boom.resourceGone('User not found in db'))
 
-				//TODO:180 remove password from data !!!!!!!!!! (SELECT ONLY USEFULL)
-				analyse.images(ret)
+				//TODO:230 remove password from data !!!!!!!!!! (SELECT ONLY USEFULL)
+				analyzer.imagesURL(ret)
 				resolve(ret[0])
 			})
 		})
@@ -20,12 +21,12 @@ module.exports = {
 
 	patch: (userId, market) => {
 		return new Promise((resolve, reject) => {
-			pool.query("UPDATE users SET ? WHERE user_id = ?", [market, userId], (err, data) => {
+			pool.query("UPDATE users SET ? WHERE user_id = ?", [snakeCaseKeys(market), userId], (err, ret) => {
 				if (err)
-					return reject(err)
-				else if (data.affectedRows !== 1)
-					return reject(Boom.notAcceptable())
-				resolve()
+					return reject(err);
+				else if (ret.affectedRows !== 1)
+					return reject(Boom.notAcceptable());
+				resolve();
 			})
 		});
 	},

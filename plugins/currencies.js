@@ -6,8 +6,8 @@ client.on("error", function (err) {
     console.log("Error " + err);
 });
 
-// TODO:80 Do the update after 1 one with timeout + save in local variable
-// TODO SHOW A PAGE WITH EXCHANGE PRICES
+// TODO:170 Do the update after 1 one with timeout + save in local variable
+// TODO:110 SHOW A PAGE WITH EXCHANGE PRICES
 
 getCurrencies()
 setInterval(getCurrencies, 1000 * 60 * 1);

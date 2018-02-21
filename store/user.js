@@ -1,6 +1,8 @@
 const	pool =		require('../store'),
-		analyse =	require('../plugins/analyse'),
-		Boom =		require('boom');
+		analyzer =	require('../plugins/analyzer'),
+		Boom =		require('boom'),
+		snakeCase =	require('snake-case'),
+		snakeCaseKeys = require('snakecase-keys');
 
 const user = {
 	get: (userId) => {
@@ -14,24 +16,29 @@ const user = {
 					return reject(Boom.resourceGone('User not found in database'))
 				delete data[0].password
 
-				analyse.images(data)
+				analyzer.imagesURL(data)
 				resolve(data[0])
 			})
 		})
 	},
 
-	patch: (user, informations) => {
+	patch: (userId, userData) => {
 		return new Promise((resolve, reject) => {
-			var query = "UPDATE users SET ? WHERE user_id=" + pool.escape(user.userId);
+			var query = "UPDATE users SET ? WHERE user_id = ?";
 
-			pool.query(query, informations, (err, ret) => {
+			pool.query(query, [snakeCaseKeys(userData), userId], (err, ret) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (ret.affectedRows !== 1)
-					return reject(Boom.notFound('Tried updating a user that dont exist or updated more than one'))
-				resolve()
+					return reject(Boom.notFound('Tried updating a user that dont exist or updated more than one'));
+
+				resolve();
 			})
 		})
+	},
+
+	delete: (userId) => {
+
 	},
 
 	getConversations: (userId) => {
@@ -46,7 +53,7 @@ const user = {
 			pool.query(query, [userId, userId, userId, userId], (err, data) => {
 				if (err)
 					return reject(err);
-				analyse.images(data);
+				analyzer.imagesURL(data);
 				resolve(data);
 			})
 		})
@@ -93,17 +100,14 @@ const user = {
 		});
 	},
 
-	order: (userId, order) => {
+	insertOrder: (order) => {
 		return new Promise((resolve, reject) => {
-			order.user_id = userId;
-
-			pool.query("INSERT INTO orders SET ?", order, (err, data) => {
+			pool.query("INSERT INTO orders SET ?", snakeCaseKeys(order), (err, ret) => {
 				if (err)
 					return reject(err);
-				else if (data.affectedRows !== 1)
-					return Boom.notAcceptable();
+				else if (ret.affectedRows !== 1)
+					return Boom.notAcceptable("Nothing was inserted");
 
-				//TODO:120 Update product quantity
 				return resolve();
 			})
 		});
@@ -141,10 +145,6 @@ const user = {
 				return resolve();
 			})
 		});
-	},
-
-	deleteUser: (userId) => {
-
 	},
 
 	getNbMessages: (userId, lastId) => {
@@ -245,6 +245,39 @@ const user = {
 					if (err)
 						return reject(err)
 					resolve(true)
+				})
+			})
+		});
+	},
+
+	// TODO:120 Security check currency is always set in our code
+	tryPayingOrders: (userId, currency) => {
+		return new Promise((resolve, reject) => {
+			pool.query(`SELECT ${ currency }_amount AS value FROM users WHERE user_id=?`, [userId], (err, wallets) => {
+				if (err)
+					return reject(err);
+				else if (wallets.length !== 1)
+					return Boom.notAcceptable();
+				var wallet = wallets[0];
+				pool.query("SELECT * FROM orders WHERE payed=0 AND too_late=0 AND user_id=?", [userId], (err, orders) => {
+					if (err)
+						return reject(err);
+					else if (!orders.length)
+						return resolve("nothing-to-pay");
+
+					var ordersPayed = [];
+					var stop = false;
+					orders.forEach(order => {
+						// TODO:70 DO ETH TOO
+						if (!stop && wallet.value - order.to_pay_BTC >= 0) {
+							wallet.value -= order.to_pay_BTC;
+							ordersPayed.push(order.order_id);
+						} else {
+							stop = true;
+						}
+					})
+					return resolve(ordersPayed);
+					// Transfert wallet money and save order confirmed in DB
 				})
 			})
 		});

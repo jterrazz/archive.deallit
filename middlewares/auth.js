@@ -1,88 +1,74 @@
-const	pool =			require('../store'),
-		fs =			require('fs'),
-		bcrypt =		require('bcrypt'),
-		validator =		require('validator'),
-		jwt =			require('jsonwebtoken'),
-		g =				require('../config/env'),
-		Boom =			require('boom')
+const pool = require('../store'),
+	fs = require('fs'),
+	bcrypt = require('bcrypt'),
+	validator = require('validator'),
+	jwt = require('jsonwebtoken'),
+	env = require('../config/env'),
+	Boom = require('boom');
 
-const	cert =			fs.readFileSync('config/jwt.key')
+const cert = fs.readFileSync('config/jwt.key');
 
-const auth = {
+module.exports = {
 	login: (req, res, next) => {
 		const user = {
 			mail: req.body.mail,
 			password: req.body.password
-		}
+		};
 
 		if (req.user || !user || !user.mail || !validator.isEmail(user.mail) || !user.password)
-			return res.sendStatus(400)
+			return next(Boom.badData("Login informations are missing or are not valid"));
 
-		pool.query("SELECT * FROM users WHERE ?", { mail: user.mail }, (err, ret) => {
+		pool.query("SELECT * FROM users WHERE mail = ?", user.mail, (err, userSql) => {
 			if (err)
-				return res.sendStatus(500)
-			else if (!ret.length)
-				return res.status(403).send("This mail doesn't match any user")
+				return next(err);
+			else if (!userSql.length)
+				return next(Boom.notFound("This mail is not registred"));
 
-			bcrypt.compare(user.password, ret[0].password, (err, isValid) => {
-				if (err || !isValid)
-					return res.status(403).send("Incorrect password")
+			bcrypt.compare(user.password, userSql[0].password, (err, isValid) => {
+				if (err)
+					return next(err);
+				else if (!isValid)
+					return next(Boom.unauthorized("Password incorrect"));
 
 				var payload = {
-					userId: ret[0].user_id
-				}
-				delete payload.password
-				payload.exp = Math.floor(Date.now() / 1000) + (g.tokenDuration)
+					exp: Math.floor(Date.now() / 1000) + env.JWT_TOKEN_DURATION,
+					userId: userSql[0].user_id,
+				};
 
 				jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
 					if (err)
-						return res.status(500).send("Token creation error")
-					res.json({ token })
+						return next(err);
+					res.json({ token });
 				})
 			})
 		})
 	},
 
 	register: (req, res, next) => {
-		const user = req.body
-
-		if (req.user || !user || !user.mail || !validator.isEmail(user.mail) || !user.password)
-			return res.sendStatus(400)
-
-		var newUser = {
+		const user = req.body;
+		const newUser = {
 			mail: user.mail,
 			password: user.password,
 		}
 
-		pool.getConnection((err, connection) => {
+		if (req.user || !user || !user.mail || !validator.isEmail(user.mail) || !user.password)
+			return next(Boom.badData("Register informations are missing or are not valid"));
+
+		bcrypt.hash(newUser.password, env.SALT_ROUNDS, (err, hash) => {
 			if (err)
-				return res.sendStatus(500)
+				return next(err);
 
-			connection.query("SELECT * FROM users WHERE mail = ?", newUser.mail, (err, data) => {
-				if (err || data.length) {
-					connection.release()
-					return res.sendStatus(500)
-				}
-				bcrypt.hash(newUser.password, g.saltRounds, (err, hash) => {
-					if (err) {
-						connection.release()
-						return res.status(400).send('New user: Error in bcrypt hash')
-					}
-					newUser.password = hash;
-
-					connection.query("INSERT INTO users SET ?", newUser, (err, data) => {
-						connection.release()
-						if (err)
-							return res.status(400).send('Cant insert user in DB')
-						res.sendStatus(200)
-					})
-				})
+			newUser.password = hash;
+			pool.query("INSERT INTO users SET ?", newUser, (err, data) => {
+				if (err)
+					return next(err);
+				res.sendStatus(200);
 			})
 		})
 	},
 
 	setUser: (req, res, next) => {
-		req.user = null
+		req.user = null;
 
 		if (req.headers.authorization) {
 			var parts = req.headers.authorization.split(' ');
@@ -100,16 +86,12 @@ const auth = {
 				}
 			}
 		}
-		next()
+		next();
 	},
 
 	requireUser: (req, res, next) => {
 		if (!req.user)
-			return res.sendStatus(403) // TODO:140 better err
-		next()
+			return next(Boom.forbidden("Must be logged to access this"));
+		next();
 	}
 }
-
-// TODO:150 case where 2 users create user at same time -> do unique key in mysql for mail user
-
-module.exports = auth

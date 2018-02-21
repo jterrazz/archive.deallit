@@ -1,11 +1,11 @@
 const asyncMiddleware = (middleware) => {
 	return async (req, res, next) => {
 		try {
-			await middleware(req, res, next)
+			await middleware(req, res, next);
 		} catch (e) {
-			next(e)
+			next(e);
 		}
 	}
 }
 
-module.exports = asyncMiddleware
+module.exports = asyncMiddleware;

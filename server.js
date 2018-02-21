@@ -23,20 +23,17 @@ if (g.devMode) {
 	}))
 }
 
-require('./plugins/tasks');
-require('./routes/sockets');
-
-app.use('/api', require('./routes'));
-app.use('/events/v0', require('./routes/events'));
+require('./routes')(app);
 
 const server = http.listen(g.serverPort, () => {
 	console.log("\x1b[32mServer is running on port :\x1b[0m " + server.address().port + " 👍");
+	require('./plugins/tasks');
 })
 
-//TODO:130 all currency converted server side --> redis store currencies
-//TODO:20 Check all routes are number or escaped
-//TODO:90 Not found page
-//TODO:10 Cancel order
-// TODO Do store list in home and categories
+//TODO:220 all currency converted server side --> redis store currencies
+//TODO:140 Check all routes are number or escaped
+//TODO:180 Not found page
+//TODO:130 Cancel order
+// TODO:90 Do store list in home and categories
 // REfactoring routes avec analyse in routes et uniquement db in db
 // Optimise Sql request by opening connection for 2 requests
