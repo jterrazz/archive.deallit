@@ -3,8 +3,7 @@ let		g =				require('./config/env');
 const 	bodyParser =	require('body-parser'),
 		cors =			require('cors'),
 		responseTime =	require('response-time'),
-		delay =			require('express-delay'),
-		auth =			require('./middlewares/auth');
+		delay =			require('express-delay');
 
 const	express =		require('express'),
 		app =			express(),
@@ -12,7 +11,6 @@ const	express =		require('express'),
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(auth.setUser);
 
 /* dev only */
 if (g.devMode) {

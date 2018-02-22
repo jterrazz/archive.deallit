@@ -1,16 +1,19 @@
-const router = require('express').Router(),
-	Boom = require('boom'),
-	asyncHandler = require('../middlewares/async'),
-	auth = require('../middlewares/auth'),
-	upload = require('../middlewares/upload'),
-	dbUser = require('../store/user'),
-	dbProduct = require('../store/product'),
-	dbMarket = require('../store/market'),
-	checker = require('../plugins/checker'),
-	storageServer = require('../plugins/storage-server'),
-	bitcoinPlugin = require('../plugins/bitcoin'),
-	tasks = require('../plugins/tasks');
-const validator = require('validator');
+const	Boom =			require('boom'),
+		env =			require('../config/env'),
+		router =		require('express').Router(),
+		auth =			require('../middlewares/auth'),
+		upload =		require('../middlewares/upload'),
+		asyncHandler =	require('../middlewares/async'),
+		dbUser =		require('../store/user'),
+		dbMarket =		require('../store/market'),
+		dbProduct =		require('../store/product'),
+		tasks =			require('../plugins/tasks'),
+		checker =		require('../plugins/checker'),
+		bitcoin =		require('../plugins/bitcoin'),
+		cacheDB =		require('../plugins/caching'),
+		storageServer = require('../plugins/storage-server');
+
+const	speakeasy =		require('speakeasy');
 
 // TODO:240 require user and check user equal change
 
@@ -23,20 +26,36 @@ const validator = require('validator');
 router.post("/createWallets", (req, res) => {
 	const env = require('../config/env');
 
-	var type = env.devMode ? 'tBTC' : 'BTC';
 
-	bitcoinPlugin.createRandomWIF(wif => {
-		bitcoinPlugin.getLegacyAddress(wif, publicAddress => {
-			dbUser.saveWallet(type, 5, publicAddress, wif, false);
-		})
-	});
-	bitcoinPlugin.createRandomWIF(wif => {
-		bitcoinPlugin.getSegwitAddress(wif, publicAddress => {
-			dbUser.saveWallet(type, 5, publicAddress, wif, true);
-		})
-	});
 	res.end();
 })
+
+router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
+	var currency = req.params.currency;
+
+	if (['BTC', 'ETH'].indexOf(currency) < 0)
+		return next(Boom.badData("Wallet currency is invalid"));
+	if (currency == 'BTC')
+		var type = env.devMode ? 'tBTC' : 'BTC';
+	else if (currency == 'ETH')
+		var type = env.devMode ? 'tETH' : 'ETH';
+
+	var data = await dbUser.getWalletForUser(req.user.userId, type, false);
+	if (data)
+		return res.json(data);
+
+	switch (currency) {
+		case 'BTC':
+			var wif = bitcoin.createRandomWIF();
+			var publicAddress = bitcoin.getLegacyAddress(wif);
+
+			await dbUser.saveWallet(type, 5, publicAddress, wif, false);
+			break;
+		case 'ETH':
+			return next("ETH not supported yet");
+	}
+	res.json({ publicAddress: publicAddress });
+}))
 
 /**
  * File uploads
@@ -52,9 +71,44 @@ router.post('/upload/image', auth.requireUser, upload.handleImage, (req, res) =>
  * Authentication
  */
 
-router.post('/auth/login', auth.login)
+router.post('/auth/login', auth.login);
 
-router.post('/auth/register', auth.register)
+router.post('/auth/register', auth.register);
+
+router.post('/auth/login-two-fa', auth.confirmTwoFA);
+
+router.get('/auth/2fa', auth.requireUser, (req, res, next) => {
+	var secret = speakeasy.generateSecret();
+	var base32secret = secret.base32;
+	var qrData = secret.otpauth_url;
+
+	cacheDB.set(`user-${ req.user.userId }:twoFA-secret`, base32secret, 'EX', env.TWO_FA_REGISTER_TIME, (err, ret) => {
+		if (err)
+			return next(err);
+		res.json({ secret: qrData });
+	});
+})
+
+router.post('/auth/2fa', auth.requireUser, (req, res, next) => {
+	cacheDB.get(`user-${ req.user.userId }:twoFA-secret`, async (err, base32secret) => {
+		if (err)
+			return next(err);
+		else if (!base32secret)
+			return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
+
+		var verified = speakeasy.totp.verify({
+			secret: base32secret,
+			encoding: 'base32',
+			token: req.body.confirmation,
+		});
+
+		if (!verified)
+			return next(Boom.unauthorized("Bad confirmation code"));
+		await dbUser.saveTwoFA(req.user.userId, base32secret);
+
+		res.sendStatus(200);
+	});
+})
 
 /**
  * User status/informations
@@ -70,7 +124,11 @@ router.route('/me')
 	.patch(auth.requireUser, asyncHandler(async (req, res) => {
 		var safeUser = checker.rawUser(req.body);
 
-		await storageServer.sendFiles([safeUser.userImage]);
+		//TODO Check password included with password change and mail // AND CHECK IS NOT THE SAME
+		// if (safeUser.mail)
+		// check mail is included
+		if (safeUser.userImage)
+			await storageServer.sendFiles([safeUser.userImage]);
 		await dbUser.patch(req.user.userId, safeUser);
 		res.sendStatus(200);
 	}))
@@ -147,17 +205,6 @@ router.route('/order/:orderId')
 		res.sendStatus(200)
 	}))
 
-router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
-	var currency = req.params.currency;
-
-	if (['BTC', 'tBTC', 'ETH', 'tETH'].indexOf(currency) < 0)
-		return next(Boom.badData("Wallet currency is invalid"));
-
-	var data = await dbUser.getWalletForUser(req.user.userId, currency, false);
-
-	res.json(data);
-}))
-
 // TODO Messages to ID or to Product ? Or mix of both
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
@@ -215,12 +262,12 @@ router.route('/product')
 	}))
 
 	// TODO:20 Change route and user productId in url
-	.patch(auth.requireUser, asyncHandler(async (req, res) => {
+	.patch(auth.requireUser, asyncHandler(async (req, res, next) => {
 		var safeProduct = checker.rawProduct(req.body);
 		if (!safeProduct)
-			return;
+			return next(Boom.badData("Bad product data"));
 
-		delete safeProduct.images;
+		delete safeProduct.images; // TODO Change also images
 		await dbProduct.patch(req.user.userId, req.body.productId, safeProduct);
 
 		res.sendStatus(200);
@@ -241,13 +288,14 @@ router.route('/product/:productId')
 router.get('/product/:productId/ratings', asyncHandler(async (req, res) => {
 	var ratings = await dbProduct.getRatings(req.params.productId);
 
-	res.json(ratings)
+	res.json(ratings);
 }))
 
 router.patch('/product/:productId/tags', auth.requireUser, asyncHandler(async (req, res) => {
-	await dbProduct.updateTags(req.params.productId, req.body)
+	// TODO Check productId is user
+	await dbProduct.updateTags(req.params.productId, req.body);
 
-	res.sendStatus(200)
+	res.sendStatus(200);
 }))
 
 /**

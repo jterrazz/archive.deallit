@@ -10,21 +10,22 @@ const cert = fs.readFileSync('config/jwt.key');
 
 module.exports = {
 	login: (req, res, next) => {
-		const user = {
+		const userData = {
 			mail: req.body.mail,
 			password: req.body.password
 		};
 
-		if (req.user || !user || !user.mail || !validator.isEmail(user.mail) || !user.password)
+		if (req.user || !userData || !userData.mail || !validator.isEmail(userData.mail) || !userData.password)
 			return next(Boom.badData("Login informations are missing or are not valid"));
 
-		pool.query("SELECT * FROM users WHERE mail = ?", user.mail, (err, userSql) => {
+		pool.query("SELECT * FROM users WHERE mail = ?", userData.mail, (err, userSql) => {
 			if (err)
 				return next(err);
 			else if (!userSql.length)
 				return next(Boom.notFound("This mail is not registred"));
 
-			bcrypt.compare(user.password, userSql[0].password, (err, isValid) => {
+			var user = userSql[0];
+			bcrypt.compare(userData.password, user.password, (err, isValid) => {
 				if (err)
 					return next(err);
 				else if (!isValid)
@@ -32,7 +33,8 @@ module.exports = {
 
 				var payload = {
 					exp: Math.floor(Date.now() / 1000) + env.JWT_TOKEN_DURATION,
-					userId: userSql[0].user_id,
+					userId: user.user_id,
+					stillNeedToTwoFA: !!user.two_fa_secret
 				};
 
 				jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
@@ -42,6 +44,32 @@ module.exports = {
 				})
 			})
 		})
+	},
+
+	confirmTwoFA: (req, res, next) => {
+		var twoFACode = req.body.twoFACode;
+
+		decodeAuthorization(req.headers.authorization)
+			.then(decoded => {
+				if (!decoded.stillNeedToTwoFA)
+					return next(Boom.unauthorized("Bad token"));
+
+				var payload = {
+					exp: Math.floor(Date.now() / 1000) + env.JWT_TOKEN_DURATION,
+					userId: decoded.userId,
+				};
+
+				jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
+					if (err)
+						return next(err);
+					res.json({ token });
+				})
+				return next();
+			})
+			.catch(err => {
+				console.log(err);
+				return next(Boom.badGateway("Error in auth verification"));
+			})
 	},
 
 	register: (req, res, next) => {
@@ -69,29 +97,51 @@ module.exports = {
 
 	setUser: (req, res, next) => {
 		req.user = null;
+		console.log('fffff');
 
-		if (req.headers.authorization) {
-			var parts = req.headers.authorization.split(' ');
-
-			if (parts.length == 2) {
-				var scheme = parts[0],
-					credentials = parts[1];
-
-				if (/^Bearer$/i.test(scheme)) {
-					jwt.verify(credentials, cert, (err, decoded) => {
-						if (!err) {
-							req.user = decoded;
-						}
-					})
-				}
-			}
-		}
-		next();
+		if (!req.headers.authorization)
+			return next();
+		decodeAuthorization(req.headers.authorization)
+			.then(decoded => {
+				if (decoded && !decoded.stillNeedToTwoFA)
+					req.user = decoded;
+					console.log(decoded);
+				return next();
+			})
+			.catch(() => {
+				return next(Boom.badGateway("Error in auth verification"));
+			})
 	},
 
 	requireUser: (req, res, next) => {
+		console.log('requireUser here');
 		if (!req.user)
 			return next(Boom.forbidden("Must be logged to access this"));
 		next();
 	}
+}
+
+function decodeAuthorization(token, callback) {
+	return new Promise(function(resolve, reject) {
+		if (!token)
+			return reject();
+		var parts = token.split(' ');
+
+		if (parts.length == 2) {
+			var scheme = parts[0],
+				credentials = parts[1];
+
+			if (/^Bearer$/i.test(scheme)) {
+				jwt.verify(credentials, cert, (err, decoded) => {
+					if (err)
+						return reject(err);
+					return resolve(decoded);
+				})
+			} else {
+				return reject();
+			}
+		} else {
+			return reject();
+		}
+	});
 }

@@ -6,15 +6,17 @@ const	Boom =			require('boom'),
 module.exports = {
 	get: (type, id) => {
 		return new Promise((resolve, reject) => {
-			pool.query(`SELECT * FROM users WHERE ${ type == 'identifier' ? 'market_identifier' : 'user_id' } = ?`, [id], (err, ret) => {
+			var query = `SELECT * FROM users WHERE ${ type == 'identifier' ? 'market_identifier' : 'user_id' } = ?`;
+
+			pool.query(query, [id], (err, ret) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (!ret.length)
-					return reject(Boom.resourceGone('User not found in db'))
+					return reject(Boom.resourceGone('User not found in db'));
 
 				//TODO:230 remove password from data !!!!!!!!!! (SELECT ONLY USEFULL)
-				analyzer.imagesURL(ret)
-				resolve(ret[0])
+				analyzer.decodeImagesURL(ret);
+				resolve(ret[0]);
 			})
 		})
 	},
@@ -38,8 +40,8 @@ module.exports = {
 
 			pool.query(query, [userId], (err, data) => {
 				if (err)
-					return reject(err)
-				resolve(data)
+					return reject(err);
+				resolve(data);
 			})
 		});
 	},

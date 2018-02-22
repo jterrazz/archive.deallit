@@ -7,26 +7,26 @@ const	g =				require('../config/env'),
 const	network = g.devMode ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
 
 module.exports = {
-	createRandomWIF: function(callback) {
+	createRandomWIF: function() {
 		var keyPair = bitcoin.ECPair.makeRandom({ network });
 		var wif = keyPair.toWIF();
 
-		callback(wif);
+		return wif;
 	},
 
-	getLegacyAddress: function(wif, callback) {
+	getLegacyAddress: function(wif) {
 		var keyPair = bitcoin.ECPair.fromWIF(wif, network);
 		var publicAddress = keyPair.getAddress().toString();
 
-		callback(publicAddress);
+		return publicAddress;
 	},
 
-	getSegwitAddress: function(wif, callback) {
+	getSegwitAddress: function(wif) {
 		var keyPair = bitcoin.ECPair.fromWIF(wif, bitcoin.networks.testnet);
 		var pubKey = keyPair.getPublicKeyBuffer();
 		var scriptPubKey = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(pubKey));
 		var segwitPublicAddress = bitcoin.address.fromOutputScript(scriptPubKey);
 
-		callback(segwitPublicAddress);
+		return segwitPublicAddress;
 	}
 }

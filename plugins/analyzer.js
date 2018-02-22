@@ -1,8 +1,6 @@
 const currenciesPlugin = require('../plugins/currencies');
 const env = require('../config/env');
 
-const imagesFolder = env.staticServerUrl + 'public/images/';
-
 module.exports = {
 
 	//TODO:30 Do all notifications
@@ -26,22 +24,22 @@ module.exports = {
 		})
 	},
 
-	imagesURL: (arrayToAnalyse) => {
-		const imageKeys = ['market_background', 'image', 'user_image'];
+	decodeImagesURL: (arrayToAnalyse) => {
+		const keys = ['market_background', 'image', 'user_image'];
 
 		arrayToAnalyse.forEach(item => {
-			imageKeys.forEach(key => {
+			keys.forEach(key => {
 				if (item[key])
-					item[key] = imagesFolder + item[key];
+					item[key] = env.imagesFolder + item[key];
 			})
 
 			try {
 				item.images = JSON.parse(item.images);
 				if (Array.isArray(item.images)) {
 					item.images.forEach((image, i) => {
-						item.images[i] = imagesFolder + image;
+						item.images[i] = env.imagesFolder + image;
 						if (!i)
-							item.preview = imagesFolder + image;
+							item.preview = env.imagesFolder + image;
 					})
 				}
 			} catch (e) {
@@ -50,17 +48,17 @@ module.exports = {
 		})
 	},
 
-	tags: (arrayToAnalyse) => {
+	decodeTags: (arrayToAnalyse) => {
 		arrayToAnalyse.forEach(item => {
 			if (item.tags)
-				item.tags = item.tags.split(',')
+				item.tags = item.tags.split(',');
 			else
-				item.tags = []
+				item.tags = [];
 		})
 	},
 
 	//TODO Clearer code
-	currencies: (products) => {
+	setPrices: (products) => {
 		return new Promise((resolve, reject) => {
 			var ftArray = [];
 

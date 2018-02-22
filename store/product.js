@@ -56,13 +56,13 @@ const product = {
 				if (err)
 					return reject(err);
 
-				analyzer.imagesURL(products);
-				analyzer.tags(products);
+				analyzer.decodeImagesURL(products);
+				analyzer.decodeTags(products);
 				try {
-					await analyzer.currencies(products);
+					await analyzer.setPrices(products);
 					return resolve(products);
 				} catch (e) {
-					return reject(e)
+					return reject(e);
 				}
 			})
 		})
@@ -80,9 +80,9 @@ const product = {
 				else if (!data.length)
 					return reject(Boom.resourceGone('Product not found in database'));
 
-				analyzer.imagesURL(data);
+				analyzer.decodeImagesURL(data);
 				try {
-					await analyzer.currencies([product]);
+					await analyzer.setPrices([product]);
 					return resolve(data[0]);
 				} catch (e) {
 					return reject(e)
@@ -137,21 +137,21 @@ const product = {
 			var tags = body.tags,
 			queryTags = [];
 
-			if (!tags)
-				return reject()
+			if (!tags || !Array.isArray(tags))
+				return reject(Boom.badData("No tags provided"));
 
 			tags.forEach((tag) => {
-				queryTags.push([productId, tag])
-			})
+				queryTags.push([productId, tag]);
+			});
 			pool.query("DELETE FROM product_tags WHERE product_id= ?", [productId], (err, data) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (!queryTags.length)
-					return resolve()
+					return resolve();
 				pool.query("INSERT INTO product_tags (product_id, tag) VALUES ?", [queryTags], (err, data) => {
 					if (err)
-						return reject(err)
-					return resolve()
+						return reject(err);
+					return resolve();
 				})
 			})
 		});
@@ -159,9 +159,13 @@ const product = {
 
 	getRatings: (productId) => {
 		return new Promise((resolve, reject) => {
-			var productRatings = {'dddd': 'dd'}
+			var query = "SELECT * FROM product_ratings WHERE product_id = ?";
 
-			resolve(productRatings)
+			pool.query(query, [productId], (err, ratings) => {
+				if (err)
+					return reject(err);
+				resolve(ratings);
+			})
 		})
 	},
 }

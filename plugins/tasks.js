@@ -1,13 +1,13 @@
-const	findRemove =	require('find-remove');
+const	findRemove =	require('find-remove'),
+		env =			require('../config/env');
 
-console.log("\x1b[36m/uploads :\x1b[0m will be cleaned every minutes");
 ftFindRemove();
 setInterval(ftFindRemove, 1000 * 60 * 1);
 
 function ftFindRemove(){
 	findRemove('uploads', {
 		age: {
-			seconds: 60 * 60
+			seconds: env.TEMP_FILES_MAX_AE
 		},
 		extensions: ['']
 	})

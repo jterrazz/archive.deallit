@@ -50,7 +50,7 @@ module.exports = {
 	},
 
 	rawUser: (rawUser) => {
-		const keys = ['firstName', 'lastName', 'gender', 'userImage', 'currency'];
+		const keys = ['firstName', 'lastName', 'gender', 'userImage', 'currency', 'mail'];
 		var safeUser = {};
 
 		keys.forEach(key => {

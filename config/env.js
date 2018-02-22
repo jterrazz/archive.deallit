@@ -1,13 +1,19 @@
+const amazonBaseURL = "https://s3.eu-west-3.amazonaws.com/the-crypto-market/";
+
 const env = {
 	devMode: process.env.NODE_ENV == "development",
+	CURRENCY_RATES_UPDATE_DELAY: 1000 * 60 * 1, // ms
+	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
+	TWO_FA_REGISTER_TIME: 60 * 60 * 2,
 
 	/* Auth token (time in sec) */
-	JWT_TOKEN_DURATION: 60 * 60 * 24,
+	JWT_TOKEN_DURATION: 1000 * 60 * 60,
 	SALT_ROUNDS: 10,
 
 	/* AWS */
 	AWS_BUCKET_NAME: "the-crypto-market",
-	staticServerUrl: "https://s3.eu-west-3.amazonaws.com/the-crypto-market/",
+	staticServerUrl: amazonBaseURL,
+	imagesFolder: amazonBaseURL + 'public/images/',
 
 	/* Bitcoin */
 	bitcoinUserName: "themaster",

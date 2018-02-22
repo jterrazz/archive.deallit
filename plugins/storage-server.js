@@ -66,11 +66,12 @@ module.exports = {
 	sendFiles: (filesArray) => {
 		var ftArray = [];
 
-		if (!filesArray || !filesArray.length) // Also check names files are correct
+		if (!filesArray || !filesArray.length) // TODO Also check names files are correct
 			return new Promise((resolve, reject) => resolve())
 
 		filesArray.forEach((filename) => {
-			ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
+			if (filename) // TODO Check correspond to user upload and exist
+				ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
 		});
 
 		return Promise.all(ftArray);

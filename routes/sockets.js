@@ -27,7 +27,9 @@ io.on('connection', function(client) {
 			client.emit('order-confirmation', orders);
 		})
 
-		client.on('disconnect', function() {});
+		client.on('disconnect', function() {
+			// TODO Remove from Events
+		});
 	})
 });
 

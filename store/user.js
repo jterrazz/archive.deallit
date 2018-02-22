@@ -1,7 +1,7 @@
-const	Boom =		require('boom'),
-		pool =		require('../store'),
-		analyzer =	require('../plugins/analyzer'),
-		snakeCaseKeys = require('snakecase-keys');
+const	Boom =			require('boom'),
+		pool =			require('../store'),
+		analyzer =		require('../plugins/analyzer'),
+		snakeCaseKeys =	require('snakecase-keys');
 
 const user = {
 	get: (userId) => {
@@ -10,13 +10,13 @@ const user = {
 
 			pool.query(query, [userId], (err, data) => {
 				if (err)
-					return reject(Boom.serverUnavailable('Tried getting infos for a user_id'))
+					return reject(Boom.serverUnavailable('Tried getting infos for a user_id'));
 				else if (!data.length)
-					return reject(Boom.resourceGone('User not found in database'))
-				delete data[0].password
+					return reject(Boom.resourceGone('User not found in database'));
+				delete data[0].password;
 
-				analyzer.imagesURL(data)
-				resolve(data[0])
+				analyzer.decodeImagesURL(data);
+				resolve(data[0]);
 			})
 		})
 	},
@@ -26,7 +26,10 @@ const user = {
 			var query = "UPDATE users SET ? WHERE user_id = ?";
 
 			pool.query(query, [snakeCaseKeys(userData), userId], (err, ret) => {
-				if (err)
+				console.log(err.errno);
+				if (err.errno == 1062)
+					return reject(Boom.conflict("Duplicate entry"));
+				else if (err)
 					return reject(err);
 				else if (ret.affectedRows !== 1)
 					return reject(Boom.notFound('Tried updating a user that dont exist or updated more than one'));
@@ -46,13 +49,13 @@ const user = {
 				`LEFT JOIN users u ON u.user_id=m.from_id AND m.from_id != ? ` +
 				`OR u.user_id=m.to_id AND m.to_id != ? ` +
 				"WHERE m.message_id IN (" +
-					"SELECT max(m.message_id) FROM messages m WHERE to_id = ? OR from_id = ? GROUP BY least(m.to_id, m.from_id), greatest(m.to_id, m.from_id)" +
+				"SELECT max(m.message_id) FROM messages m WHERE to_id = ? OR from_id = ? GROUP BY least(m.to_id, m.from_id), greatest(m.to_id, m.from_id)" +
 				") ORDER BY m.message_id DESC";
 
 			pool.query(query, [userId, userId, userId, userId], (err, data) => {
 				if (err)
 					return reject(err);
-				analyzer.imagesURL(data);
+				analyzer.decodeImagesURL(data);
 				resolve(data);
 			})
 		})
@@ -77,8 +80,8 @@ const user = {
 
 			pool.query(query, [userId, contactId], (err, data) => {
 				if (err)
-					return reject(err)
-				resolve(data)
+					return reject(err);
+				resolve(data);
 			})
 		})
 	},
@@ -89,13 +92,27 @@ const user = {
 				message: message,
 				from_id: fromId,
 				to_id: toId
-			}
+			};
 			pool.query("INSERT INTO messages SET ?", [data], (err, data) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (data.affectedRows !== 1)
-					return (Boom.notAcceptable())
-				return resolve()
+					return (Boom.notAcceptable("No or too many messages inserted"));
+				return resolve();
+			})
+		});
+	},
+
+	saveTwoFA: (userId, secret) => {
+		return new Promise(function(resolve, reject) {
+			var query = "UPDATE users SET two_fa_secret = ? WHERE user_id = ?";
+
+			pool.query(query, [secret, userId], (err, data) => {
+				if (err)
+					return reject(err);
+				else if (data.affectedRows !== 1)
+					return reject(Boom.notAcceptable("Secret did not affected user or affected too many users"));
+				resolve();
 			})
 		});
 	},
@@ -118,7 +135,7 @@ const user = {
 			pool.query("SELECT * FROM orders o LEFT JOIN products p ON o.product_id=p.product_id WHERE o.user_id=?", [userId], (err, orders) => {
 				if (err)
 					return reject(err);
-				analyzer.imagesURL(orders);
+				analyzer.decodeImagesURL(orders);
 				return resolve(orders);
 			})
 		});
@@ -181,7 +198,13 @@ const user = {
 	saveWallet: (type, userId, publicAddress, wif, isSegwit) => {
 		return new Promise(function(resolve, reject) {
 			var query = "INSERT INTO user_wallets SET ?";
-			var dataSql = { type, user_id: userId, publicAddress, wif, isSegwit };
+			var dataSql = {
+				type,
+				user_id: userId,
+				public_address: publicAddress,
+				wif,
+				is_segwit: isSegwit
+			};
 
 			pool.query(query, dataSql, (err, data) => {
 				if (err)
@@ -196,14 +219,14 @@ const user = {
 	getWalletForUser: (userId, currency, isSegwit) => {
 		return new Promise(function(resolve, reject) {
 			var query = "SELECT w.public_address FROM user_wallets w " +
-			"WHERE w.user_id=? AND w.type=? AND w.is_segwit=? ORDER BY w.wallet_id DESC LIMIT 1";
+				"WHERE w.user_id=? AND w.type=? AND w.is_segwit=? ORDER BY w.wallet_id DESC LIMIT 1";
 
 			pool.query(query, [userId, currency, isSegwit], (err, data) => {
 				if (err)
 					return reject(err);
-				else if (data.length !== 1)
-					return reject(Boom.notAcceptable())
-				resolve(data[0])
+				else if (data.length == 0)
+					return resolve(null);
+				resolve(data[0]);
 			})
 		});
 	},
@@ -216,7 +239,7 @@ const user = {
 				if (err)
 					return reject(err);
 				else if (data.length !== 1)
-					return reject(Boom.notAcceptable)
+					return reject(Boom.notAcceptable);
 				resolve(data[0].user_id);
 			})
 		});
@@ -224,7 +247,14 @@ const user = {
 
 	saveDeposit: (userId, type, hash, value) => {
 		return new Promise(function(resolve, reject) {
-			pool.query("INSERT INTO user_deposits SET ?", { value, user_id: userId, type, hash }, (err, data) => {
+			var deposit = {
+				value,
+				user_id: userId,
+				type,
+				hash
+			};
+
+			pool.query("INSERT INTO user_deposits SET ?", deposit, (err, data) => {
 				if (err)
 					return reject(console.log(err));
 				else if (data.affectedRows != 1)
