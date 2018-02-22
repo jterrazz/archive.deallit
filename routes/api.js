@@ -7,13 +7,14 @@ const router = require('express').Router(),
 	dbProduct = require('../store/product'),
 	dbMarket = require('../store/market'),
 	checker = require('../plugins/checker'),
-	analyzer = require('../plugins/analyzer'),
 	storageServer = require('../plugins/storage-server'),
 	bitcoinPlugin = require('../plugins/bitcoin'),
 	tasks = require('../plugins/tasks');
 const validator = require('validator');
 
 // TODO:240 require user and check user equal change
+
+// TODO Parse all inputs
 
 /**
  * #Important:0 Remove and create wallet when needed
@@ -102,7 +103,6 @@ router.get('/conversations', auth.requireUser, asyncHandler(async (req, res) => 
 router.get('/notifications', auth.requireUser, asyncHandler(async (req, res) => {
 	var notifications = await dbUser.getNotifications(req.user.userId);
 
-	analyzer.decodeNotifications(notifications);
 	res.json(notifications);
 }))
 
@@ -120,7 +120,6 @@ router.route('/orders')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
 		var orders = await dbUser.getOrders(req.user.userId);
 
-		analyzer.imagesURL(orders);
 		res.json(orders)
 	}))
 
@@ -148,15 +147,18 @@ router.route('/order/:orderId')
 		res.sendStatus(200)
 	}))
 
-router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res) => {
+router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
 	var currency = req.params.currency;
 
-	//TODO:40 Check is in BTC tBTC ETH ...
+	if (['BTC', 'tBTC', 'ETH', 'tETH'].indexOf(currency) < 0)
+		return next(Boom.badData("Wallet currency is invalid"));
+
 	var data = await dbUser.getWalletForUser(req.user.userId, currency, false);
 
 	res.json(data);
 }))
 
+// TODO Messages to ID or to Product ? Or mix of both
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
 		var messages = await dbUser.getMessages(req.user.userId, req.params.contactId)
@@ -164,12 +166,14 @@ router.route('/messages/:contactId')
 		res.json(messages)
 	}))
 
-	.post(auth.requireUser, asyncHandler(async (req, res) => {
-		var message = req.body.message;
+	.post(auth.requireUser, asyncHandler(async (req, res, next) => {
 		if (req.user.userId == req.params.contactId)
-			return res.sendStatus(400)
-		//#Security:10 Add validator to it
+			return next(Boom.badData("You can't send a message to yourself"));
+
+		var message = req.body.message;
+		// TODO Sanatize message for SQL and User
 		await dbUser.postMessage(req.user.userId, req.params.contactId, message);
+
 		res.sendStatus(200);
 	}))
 
@@ -181,9 +185,6 @@ router.get('/s/:searched', asyncHandler(async (req, res) => {
 	var products = await dbProduct.getMany({
 		search: req.params.searched
 	});
-	analyzer.imagesURL(products);
-	analyzer.tags(products);
-	await analyzer.currencies(products);
 
 	res.json(products);
 }))
@@ -192,9 +193,6 @@ router.get('/s/:searched', asyncHandler(async (req, res) => {
 router.get('/products', asyncHandler(async (req, res) => {
 	var products = await dbProduct.getMany(req.query);
 
-	analyzer.imagesURL(products);
-	analyzer.tags(products);
-	await analyzer.currencies(products);
 	res.json(products);
 }))
 
@@ -230,15 +228,14 @@ router.route('/product')
 
 router.route('/product/:productId')
 	.get(asyncHandler(async (req, res) => {
-		var product = await dbProduct.get(req.params.productId)
+		var product = await dbProduct.get(req.params.productId);
 
-		await analyzer.currencies([product]);
-		res.json(product)
+		res.json(product);
 	}))
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
 		await dbProduct.delete(req.user.userId, req.params.productId);
 
-		res.sendStatus(200)
+		res.sendStatus(200);
 	}))
 
 router.get('/product/:productId/ratings', asyncHandler(async (req, res) => {

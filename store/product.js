@@ -1,8 +1,8 @@
-const	pool =		require('../store'),
-		Boom =		require('boom'),
-		analyzer =	require('../plugins/analyzer'),
-		snakeCaseKeys = require('snakecase-keys'),
-		validator =	require('validator');
+const	Boom =			require('boom'),
+		pool =			require('../store'),
+		analyzer =		require('../plugins/analyzer'),
+		validator =		require('validator'),
+		snakeCaseKeys = require('snakecase-keys');
 
 const product = {
 	getMany: (filters) => {
@@ -52,10 +52,18 @@ const product = {
 			if (filters.page && validator.isNumeric(filters.page))
 				query+= `, ${ filters.page } `
 
-			pool.query(query, (err, data) => {
+			pool.query(query, async (err, products) => {
 				if (err)
-					return reject(err)
-				resolve(data)
+					return reject(err);
+
+				analyzer.imagesURL(products);
+				analyzer.tags(products);
+				try {
+					await analyzer.currencies(products);
+					return resolve(products);
+				} catch (e) {
+					return reject(e)
+				}
 			})
 		})
 	},
@@ -64,16 +72,21 @@ const product = {
 		return new Promise((resolve, reject) => {
 			var query = "SELECT p.*, c.*, u.first_name, u.last_name, u.user_image FROM products p " +
 				"LEFT JOIN categories c ON c.categorie_id=p.categorie_id " +
-				"LEFT JOIN users u ON u.user_id = p.creator_id WHERE p.product_id= ?"
+				"LEFT JOIN users u ON u.user_id = p.creator_id WHERE p.product_id= ?";
 
-			pool.query(query, [productId], (err, data) => {
+			pool.query(query, [productId], async (err, data) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (!data.length)
-					return reject(Boom.resourceGone('Product not found in database'))
+					return reject(Boom.resourceGone('Product not found in database'));
 
-				analyzer.imagesURL(data)
-				resolve(data[0])
+				analyzer.imagesURL(data);
+				try {
+					await analyzer.currencies([product]);
+					return resolve(data[0]);
+				} catch (e) {
+					return reject(e)
+				}
 			})
 		})
 	},

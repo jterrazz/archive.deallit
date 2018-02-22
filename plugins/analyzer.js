@@ -59,6 +59,7 @@ module.exports = {
 		})
 	},
 
+	//TODO Clearer code
 	currencies: (products) => {
 		return new Promise((resolve, reject) => {
 			var ftArray = [];
@@ -71,10 +72,10 @@ module.exports = {
 					ret.forEach((newPrices, i) => {
 						newPrices.usd = Number(newPrices.usd).toFixed(2);
 						newPrices.eur = Number(newPrices.eur).toFixed(2);
-						newPrices.btc = Number(newPrices.btc).toFixed(2);
+						newPrices.btc = Number(newPrices.btc).toFixed(env.DECIMALS_PRICE_BTC);
 						products[i].prices = newPrices;
 					})
-					return resolve()
+					return resolve();
 				})
 				.catch(err => {
 					return reject(err);

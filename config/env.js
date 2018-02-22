@@ -12,6 +12,7 @@ const env = {
 	/* Bitcoin */
 	bitcoinUserName: "themaster",
 	bitcoinUserPassword: "Corsica20",
+	DECIMALS_PRICE_BTC: 5,
 }
 
 const devEnv = {

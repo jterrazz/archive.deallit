@@ -1,7 +1,6 @@
-const	pool =		require('../store'),
+const	Boom =		require('boom'),
+		pool =		require('../store'),
 		analyzer =	require('../plugins/analyzer'),
-		Boom =		require('boom'),
-		snakeCase =	require('snake-case'),
 		snakeCaseKeys = require('snakecase-keys');
 
 const user = {
@@ -61,12 +60,13 @@ const user = {
 
 	getNotifications: (userId) => {
 		return new Promise((resolve, reject) => {
-			var query = "SELECT * FROM user_notifications WHERE user_id=?"
+			var query = "SELECT * FROM user_notifications WHERE user_id=?";
 
 			pool.query(query, [userId], (err, data) => {
 				if (err)
-					return reject(err)
-				resolve(data)
+					return reject(err);
+				analyzer.decodeNotifications(data);
+				resolve(data);
 			})
 		});
 	},
@@ -115,10 +115,11 @@ const user = {
 
 	getOrders: (userId) => {
 		return new Promise((resolve, reject) => {
-			pool.query("SELECT * FROM orders o LEFT JOIN products p ON o.product_id=p.product_id WHERE o.user_id=?", [userId], (err, data) => {
+			pool.query("SELECT * FROM orders o LEFT JOIN products p ON o.product_id=p.product_id WHERE o.user_id=?", [userId], (err, orders) => {
 				if (err)
 					return reject(err);
-				return resolve(data);
+				analyzer.imagesURL(orders);
+				return resolve(orders);
 			})
 		});
 	},

@@ -1,7 +1,7 @@
-const	pool =		require('../store'),
-		Boom =		require('boom'),
-		snakeCaseKeys = require('snakecase-keys'),
-		analyzer =	require('../plugins/analyzer')
+const	Boom =			require('boom'),
+		pool =			require('../store'),
+		analyzer =		require('../plugins/analyzer'),
+		snakeCaseKeys =	require('snakecase-keys');
 
 module.exports = {
 	get: (type, id) => {
