@@ -62,9 +62,8 @@ module.exports = {
 				jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
 					if (err)
 						return next(err);
-					res.json({ token });
+					return res.json({ token });
 				})
-				return next();
 			})
 			.catch(err => {
 				console.log(err);
@@ -97,7 +96,6 @@ module.exports = {
 
 	setUser: (req, res, next) => {
 		req.user = null;
-		console.log('fffff');
 
 		if (!req.headers.authorization)
 			return next();
@@ -105,7 +103,6 @@ module.exports = {
 			.then(decoded => {
 				if (decoded && !decoded.stillNeedToTwoFA)
 					req.user = decoded;
-					console.log(decoded);
 				return next();
 			})
 			.catch(() => {
@@ -114,7 +111,6 @@ module.exports = {
 	},
 
 	requireUser: (req, res, next) => {
-		console.log('requireUser here');
 		if (!req.user)
 			return next(Boom.forbidden("Must be logged to access this"));
 		next();

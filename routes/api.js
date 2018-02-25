@@ -77,6 +77,7 @@ router.post('/auth/register', auth.register);
 
 router.post('/auth/login-two-fa', auth.confirmTwoFA);
 
+
 router.get('/auth/2fa', auth.requireUser, (req, res, next) => {
 	var secret = speakeasy.generateSecret();
 	var base32secret = secret.base32;
@@ -89,11 +90,13 @@ router.get('/auth/2fa', auth.requireUser, (req, res, next) => {
 	});
 })
 
-router.post('/auth/2fa', auth.requireUser, (req, res, next) => {
+router.post('/auth/2fa', auth.requireUser, (req, res, next) => { // TODO CHeck is not activated
 	cacheDB.get(`user-${ req.user.userId }:twoFA-secret`, async (err, base32secret) => {
 		if (err)
 			return next(err);
 		else if (!base32secret)
+			return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
+		else if (!req.body.confirmation)
 			return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
 
 		var verified = speakeasy.totp.verify({
@@ -108,6 +111,10 @@ router.post('/auth/2fa', auth.requireUser, (req, res, next) => {
 
 		res.sendStatus(200);
 	});
+})
+
+router.delete('/auth/2fa', auth.requireUser, (req, res, next) => {
+
 })
 
 /**
@@ -184,7 +191,11 @@ router.route('/orders')
 	//TODO:210 Update product quantity and eventually not make offer appearing
 	.post(auth.requireUser, asyncHandler(async (req, res) => {
 		var safeOrder = checker.rawOrder(req.body);
+		var product = await dbProduct.get(safeOrder.productId);
 
+		safeOrder.price_usd = product.prices.usd;
+		safeOrder.price_eur = product.prices.eur;
+		safeOrder.price_btc = product.prices.btc;
 		safeOrder.userId = req.user.userId;
 		await dbUser.insertOrder(safeOrder);
 
@@ -236,7 +247,6 @@ router.get('/s/:searched', asyncHandler(async (req, res) => {
 	res.json(products);
 }))
 
-/* product routes */
 router.get('/products', asyncHandler(async (req, res) => {
 	var products = await dbProduct.getMany(req.query);
 
@@ -244,8 +254,9 @@ router.get('/products', asyncHandler(async (req, res) => {
 }))
 
 router.route('/product')
-	.post(auth.requireUser, asyncHandler(async (req, res) => {
-		var safeProduct = checker.rawProduct(req.body);
+// TODO Payment and adresses methods (maybe general in store)
+	.post(auth.requireUser, asyncHandler(async (req, res, next) => {
+		var safeProduct = await checker.rawProduct(req.body);
 
 		if (!safeProduct)
 			return next(Boom.badData("Product data do not conform the rules"));

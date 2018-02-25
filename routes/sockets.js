@@ -1,7 +1,7 @@
 const	server =		require('http').createServer(),
 		io =			require('socket.io')(server),
 		env =				require('../config/env'),
-		Events =		require('../plugins/events');
+		Events =		require('../plugins/events-handler');
 
 const blocktrail =	require('blocktrail-sdk'),
 blocktrailClient =		blocktrail.BlocktrailSDK({

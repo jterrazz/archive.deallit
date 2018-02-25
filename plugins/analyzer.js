@@ -63,7 +63,7 @@ module.exports = {
 			var ftArray = [];
 
 			products.forEach(product => {
-				ftArray.push(currenciesPlugin.oneToMany(product.price_type, product.price));
+				ftArray.push(currenciesPlugin.oneToMany(product.price_usd, product.price_eur));
 			})
 			Promise.all(ftArray)
 				.then(ret => {

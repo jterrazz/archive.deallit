@@ -26,8 +26,7 @@ const user = {
 			var query = "UPDATE users SET ? WHERE user_id = ?";
 
 			pool.query(query, [snakeCaseKeys(userData), userId], (err, ret) => {
-				console.log(err.errno);
-				if (err.errno == 1062)
+				if (err && err.errno == 1062)
 					return reject(Boom.conflict("Duplicate entry"));
 				else if (err)
 					return reject(err);
@@ -245,74 +244,127 @@ const user = {
 		});
 	},
 
-	saveDeposit: (userId, type, hash, value) => {
+	saveTransaction: (transaction) => {
 		return new Promise(function(resolve, reject) {
-			var deposit = {
-				value,
-				user_id: userId,
-				type,
-				hash
-			};
+			// TODO Make SQL transaction
+			// TODO Check values sent
+			// TODO BE sure one transaction per deposit or payment (make unique key on hash)
+			if (["btc", "t_btc"].includes(transaction.currency))
+				var query = `UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`;
+			else
+				return reject();
 
-			pool.query("INSERT INTO user_deposits SET ?", deposit, (err, data) => {
-				if (err)
-					return reject(console.log(err));
-				else if (data.affectedRows != 1)
-					return reject(Boom.notAcceptable());
+			if (transaction.valueDeposit)
+				var value = transaction.valueDeposit;
+			else
+				return reject();
 
-				var query = "";
-				switch (type) {
-					case 'BTC':
-						query = "UPDATE users SET BTC_amount = BTC_amount + ? WHERE user_id=?";
-						break;
-					case 'tBTC':
-						query = "UPDATE users SET tBTC_amount = tBTC_amount + ? WHERE user_id=?";
-						break;
-					default:
-						return reject(Boom.notAcceptable())
-				}
+			pool.ftTransaction(function(db, next) {
+			    db.query("INSERT INTO user_transactions SET ?", snakeCaseKeys(transaction), function(err) {
+			        if (err) return next(err);
 
-				pool.query(query, [value, userId], (err, data) => {
-					if (err)
-						return reject(err)
-					resolve(true)
-				})
-			})
+			        db.query(query, [value, transaction.userId], function(err) {
+			            return next(err);
+			        });
+			    });
+			}, function(err) { // TODO SET BACK
+				// if (err)
+				// 	return reject(err);
+				resolve();
+			});
 		});
 	},
 
+	// TODO BE FUCKING SURE CANT PAY BECAUSE OF STUPID DELAY OF SELECT
 	// TODO:120 Security check currency is always set in our code
-	tryPayingOrders: (userId, currency) => {
+	checkAndPayPendingOrders: (userId, currency) => {
 		return new Promise((resolve, reject) => {
-			pool.query(`SELECT ${ currency }_amount AS value FROM users WHERE user_id=?`, [userId], (err, wallets) => {
+			pool.query(`SELECT amount_${ currency } AS value FROM users WHERE user_id=?`, [userId], (err, wallets) => {
 				if (err)
 					return reject(err);
 				else if (wallets.length !== 1)
 					return Boom.notAcceptable();
+
 				var wallet = wallets[0];
-				pool.query("SELECT * FROM orders WHERE payed=0 AND too_late=0 AND user_id=?", [userId], (err, orders) => {
+				var query = "SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.crypto_too_late=0 AND o.user_id=?";
+				pool.query(query, [userId], (err, orders) => {
 					if (err)
 						return reject(err);
 					else if (!orders.length)
-						return resolve("nothing-to-pay");
-
-					var ordersPayed = [];
+						return resolve("nothing-to-pay"); // TODO Better
+					var ordersToPay = [];
 					var stop = false;
 					orders.forEach(order => {
 						// TODO:70 DO ETH TOO
-						if (!stop && wallet.value - order.to_pay_BTC >= 0) {
-							wallet.value -= order.to_pay_BTC;
-							ordersPayed.push(order.order_id);
+						if (!stop && wallet.value - order.price_btc >= 0) {
+							wallet.value -= order.price_btc;
+							ordersToPay.push(order);
 						} else {
 							stop = true;
 						}
 					})
-					return resolve(ordersPayed);
-					// Transfert wallet money and save order confirmed in DB
+					payOrders(currency, ordersToPay, 0, [], function(err, ordersDone) {
+						if (err)
+							return reject();
+						return resolve(ordersDone);
+					})
+					// UPDATE USER BALANCE + 2 TRANSACTION  USER + CONFIRM PAYMENT ORDER
 				})
 			})
 		});
+
+		function payOrders(currency, orders, i, ordersDone, callback) {
+			if (i >= orders.length) {
+				return callback(null, ordersDone);
+			} else {
+				var order = orders[i];
+				var query = "INSERT INTO user_transactions SET ?";
+				var currencyWOTest = ['t_btc', 't_eth'].includes(currency) ? currency.substring(2) : currency;
+				var payment = {
+					valueLocalSent: order[`price_${ currencyWOTest }`],
+					userId: order.user_id,
+					currency: currency,
+					orderId: order.order_id
+				}
+				var income = {
+					valueLocalReceived: order[`price_${ currencyWOTest }`],
+					userId: order.seller_id,
+					currency: currency,
+					orderId: order.order_id
+				}
+				pool.ftTransaction(function(db, next) {
+				    db.query(query, snakeCaseKeys(payment), function(err) {
+				        if (err) return next(err);
+
+						db.query(query, snakeCaseKeys(income), function(err) {
+					        if (err) return next(err);
+
+							query = `UPDATE users SET amount_${ currency } = amount_${ currency } - ? WHERE user_id=?`
+							db.query(query, [ payment.valueLocalSent, order.user_id ], function(err) {
+						        if (err) return next(err);
+
+								query = `UPDATE users SET amount_${ currency } = amount_${ currency } + ? WHERE user_id=?`
+								db.query(query, [ payment.valueLocalSent, order.seller_id ], function(err) {
+							        if (err) return next(err);
+
+									query = "UPDATE orders SET payed=1 WHERE order_id = ?"
+							        db.query(query, [ order.order_id ], function(err) {
+							            return next(err);
+							        });
+							    });
+						    });
+					    });
+				    });
+				}, function(err) {
+					if (err)
+						return callback(err);
+					ordersDone.push(orders[i].order_id);
+					payOrders(currency, orders, i + 1, ordersDone, callback);
+				});
+			}
+		}
 	}
 }
 
+// TODO DO WITH PROMISES
 module.exports = user;

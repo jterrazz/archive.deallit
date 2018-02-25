@@ -54,32 +54,25 @@ module.exports = {
 			})
 		});
 	},
-
-	oneToMany: function(baseCurrency, priceBase) {
+// TODO BETTER RATES FOR BTC AND MULTIPLE SOURCES
+	oneToMany: function(priceUSD, priceEUR) {
 		return new Promise((resolve, reject) => {
 			this.getRates()
-				.then(rates => {
-					switch (baseCurrency) {
-						case 'eur':
-							return resolve({
-								usd: priceBase / rates.USDEUR,
-								eur: priceBase,
-								btc: priceBase / rates.BTCEUR
-							});
-							break;
-						case 'btc':
-							return resolve({
-								usd: Number(priceBase * rates.BTCUSD),
-								eur: Number(priceBase * rates.BTCEUR),
-								btc: priceBase
-							});
-							break;
-						default:
-							return resolve({
-								usd: priceBase,
-								eur: priceBase * rates.USDEUR,
-								btc: priceBase / rates.BTCUSD
-							});
+				.then(rates => { // TODO DO BETTER (Both prices can be defined)
+					if (!priceUSD && !priceEUR)
+						return reject("No price provided");
+					else if (!priceUSD) {
+						return resolve({
+							usd: priceEUR / rates.USDEUR,
+							eur: priceEUR,
+							btc: priceEUR / rates.BTCEUR
+						})
+					} else if (!priceEUR) {
+						return resolve({
+							usd: priceUSD,
+							eur: priceUSD * rates.USDEUR,
+							btc: priceUSD / rates.BTCUSD
+						})
 					}
 				})
 				.catch(err => {

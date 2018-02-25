@@ -5,6 +5,7 @@ const env = {
 	CURRENCY_RATES_UPDATE_DELAY: 1000 * 60 * 1, // ms
 	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
 	TWO_FA_REGISTER_TIME: 60 * 60 * 2,
+	SENDGRID_API_KEY: "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",
 
 	/* Auth token (time in sec) */
 	JWT_TOKEN_DURATION: 1000 * 60 * 60,
@@ -22,12 +23,12 @@ const env = {
 }
 
 const devEnv = {
-	serverPort: 8081,
+	API_PORT: 8081,
 	socketPort: 4242,
 }
 
 const prodEnv = {
-	serverPort: 443,
+	API_PORT: 443,
 	socketPort: 442,
 }
 

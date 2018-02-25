@@ -1,9 +1,11 @@
-let		g =				require('./config/env');
-
-const 	bodyParser =	require('body-parser'),
+const	env =			require('./config/env'),
 		cors =			require('cors'),
+		pool =			require('./store'),
+		delay =			require('express-delay'),
+		jsonfile =		require('jsonfile'),
+		bodyParser =	require('body-parser'),
 		responseTime =	require('response-time'),
-		delay =			require('express-delay');
+		camelcaseKeys = require('camelcase-keys');
 
 const	express =		require('express'),
 		app =			express(),
@@ -12,19 +14,48 @@ const	express =		require('express'),
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
-/* dev only */
-if (g.devMode) {
+/**
+ * EXPORT MODE
+ */
+
+if (process.env.NODE_ENV == "export") {
+	var file = 'exports/categories.json';
+
+	pool.query("SELECT * FROM categories", (err, data) => {
+		if (err)
+			console.error(err);
+
+		var categoriesJSON = { categories: data };
+		jsonfile.writeFile(file, camelcaseKeys(categoriesJSON, {deep: true}), function(err) {
+			if (err)
+				console.error(err)
+			console.log("Exports done");
+			return process.exit();
+		})
+	})
+	return;
+}
+
+/**
+ * DEV MODE
+ */
+
+if (env.devMode) {
 	app.use(cors());
-	// app.use(delay(400));
+	app.use(delay(1000 * 0));
 	app.use(responseTime((req, res, time) => {
-        console.log('Render ' + req.url.substring(0, 80) + ' (' + time + ' ms)');
+		console.log(req.url.substring(0, 100) + ` (${ time } ms)`);
 	}))
 }
 
+/**
+ * SERVER
+ */
+
 require('./routes')(app);
 
-const server = http.listen(g.serverPort, () => {
-	console.log("\x1b[32mServer is running on port :\x1b[0m " + server.address().port + " 👍");
+const server = http.listen(env.API_PORT, () => {
+	console.log(`\x1b[32mServer is running on port :\x1b[0m ${ server.address().port } 👍`);
 	require('./plugins/tasks');
 })
 

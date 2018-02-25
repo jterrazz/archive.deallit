@@ -32,11 +32,11 @@ const product = {
 			if (filters.tag)
 				query += `${ whereInit++ ? 'AND' : 'WHERE' } pt2.tag = ${ pool.escape(filters.tag) } `
 			if (filters.categorie)
-				query += `${ whereInit++ ? 'AND' : 'WHERE' } c.categorie_path = ${ pool.escape(filters.categorie) } `
-			if (filters.priceMin)
-				query += `${ whereInit++ ? 'AND' : 'WHERE' } p.price >= ${ pool.escape(filters.priceMin) } `
-			if (filters.priceMax)
-				query += `${ whereInit++ ? 'AND' : 'WHERE' } p.price <= ${ pool.escape(filters.priceMax) } `
+				query += `${ whereInit++ ? 'AND' : 'WHERE' } c.id = ${ pool.escape(filters.categorie) } `
+			// if (filters.priceMin)
+			// 	query += `${ whereInit++ ? 'AND' : 'WHERE' } p.price >= ${ pool.escape(filters.priceMin) } `
+			// if (filters.priceMax)
+			// 	query += `${ whereInit++ ? 'AND' : 'WHERE' } p.price <= ${ pool.escape(filters.priceMax) } `
 			if (filters.search)
 				query += `${ whereInit++ ? 'AND' : 'WHERE' } MATCH (p.name) AGAINST (${ pool.escape(filters.search) }) > 0 `
 
@@ -70,7 +70,7 @@ const product = {
 
 	get: (productId) => {
 		return new Promise((resolve, reject) => {
-			var query = "SELECT p.*, c.*, u.first_name, u.last_name, u.user_image FROM products p " +
+			var query = "SELECT p.*, c.*, c.id AS categorie_id, u.first_name, u.last_name, u.user_image FROM products p " +
 				"LEFT JOIN categories c ON c.categorie_id=p.categorie_id " +
 				"LEFT JOIN users u ON u.user_id = p.creator_id WHERE p.product_id= ?";
 
@@ -80,12 +80,12 @@ const product = {
 				else if (!data.length)
 					return reject(Boom.resourceGone('Product not found in database'));
 
-				analyzer.decodeImagesURL(data);
+				analyzer.decodeImagesURL([data[0]]);
 				try {
-					await analyzer.setPrices([product]);
+					await analyzer.setPrices([data[0]]);
 					return resolve(data[0]);
 				} catch (e) {
-					return reject(e)
+					return reject(e);
 				}
 			})
 		})
@@ -95,10 +95,10 @@ const product = {
 		return new Promise((resolve, reject) => {
 			pool.query("INSERT INTO products SET ?", [snakeCaseKeys(product)], (err, ret) => {
 				if (err)
-					return reject(err)
+					return reject(err);
 				else if (!ret.insertId)
-					return reject(Boom.serverUnavailable('Couldnt insert new product'))
-				return resolve(ret.insertId)
+					return reject(Boom.serverUnavailable('Couldnt insert new product'));
+				return resolve(ret.insertId);
 			})
 		})
 	},
