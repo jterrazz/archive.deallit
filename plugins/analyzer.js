@@ -56,8 +56,7 @@ module.exports = {
 				item.tags = [];
 		})
 	},
-
-	//TODO Clearer code
+	// TODO Prices in satoshis
 	setPrices: (products) => {
 		return new Promise((resolve, reject) => {
 			var ftArray = [];
@@ -70,7 +69,7 @@ module.exports = {
 					ret.forEach((newPrices, i) => {
 						newPrices.usd = Number(newPrices.usd).toFixed(2);
 						newPrices.eur = Number(newPrices.eur).toFixed(2);
-						newPrices.btc = Number(newPrices.btc).toFixed(env.DECIMALS_PRICE_BTC);
+						newPrices.btc = newPrices.btc;
 						products[i].prices = newPrices;
 					})
 					return resolve();

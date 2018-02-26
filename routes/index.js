@@ -4,7 +4,7 @@ const	router =	require('express').Router(),
 module.exports = function(app) {
 	app.use(auth.setUser);
 	app.use('/api/v0', require('./api'));
-	app.use('/events/v0', require('./events'));
+	app.use('/events/v0', require('./webhook'));
 	require('./sockets');
 
 	/* error handler */

@@ -28,5 +28,15 @@ module.exports = {
 		var segwitPublicAddress = bitcoin.address.fromOutputScript(scriptPubKey);
 
 		return segwitPublicAddress;
+	},
+
+	checkDeposits: function(adresses) {
+		axios.get(`https://blockchain.info/fr/balance?active=${ adresses.join('|') }`)
+			.then(ret => {
+				console.log(ret.data);
+			})
+			.catch(err => {
+				console.log(err);
+			})
 	}
 }

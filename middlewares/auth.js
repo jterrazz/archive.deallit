@@ -1,12 +1,15 @@
-const pool = require('../store'),
-	fs = require('fs'),
-	bcrypt = require('bcrypt'),
-	validator = require('validator'),
-	jwt = require('jsonwebtoken'),
-	env = require('../config/env'),
-	Boom = require('boom');
+const	Boom =			require('boom'),
+		fs =			require('fs'),
+		jwt =			require('jsonwebtoken'),
+		bcrypt =		require('bcrypt'),
+		validator = 	require('validator'),
+		speakeasy =		require('speakeasy'),
+		env =			require('../config/env'),
+		pool = 			require('../store'),
+		dbUser =		require('../store/user'),
+		asyncHandler =	require('./async');
 
-const cert = fs.readFileSync('config/jwt.key');
+const	cert =			fs.readFileSync('config/jwt.key');
 
 module.exports = {
 	login: (req, res, next) => {
@@ -46,30 +49,33 @@ module.exports = {
 		})
 	},
 
-	confirmTwoFA: (req, res, next) => {
-		var twoFACode = req.body.twoFACode;
+	confirmTwoFA: asyncHandler(async (req, res, next) => {
+		var decoded = await decodeAuthorization(req.headers.authorization);
+		var tempCode = req.body.code;
 
-		decodeAuthorization(req.headers.authorization)
-			.then(decoded => {
-				if (!decoded.stillNeedToTwoFA)
-					return next(Boom.unauthorized("Bad token"));
+		if (!decoded.stillNeedToTwoFA)
+			return next(Boom.unauthorized("This token doesnt need 2ID check"));
 
-				var payload = {
-					exp: Math.floor(Date.now() / 1000) + env.JWT_TOKEN_DURATION,
-					userId: decoded.userId,
-				};
+		var secret = await dbUser.getTwoFA(decoded.userId);
+		var verified = speakeasy.totp.verify({
+			secret: secret,
+			encoding: 'base32',
+			token: tempCode,
+		});
+		if (!verified)
+			return next(Boom.unauthorized("Bad verification code"));
 
-				jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
-					if (err)
-						return next(err);
-					return res.json({ token });
-				})
-			})
-			.catch(err => {
-				console.log(err);
-				return next(Boom.badGateway("Error in auth verification"));
-			})
-	},
+		var payload = {
+			exp: Math.floor(Date.now() / 1000) + env.JWT_TOKEN_DURATION,
+			userId: decoded.userId,
+		};
+
+		jwt.sign(payload, cert, { algorithm: 'HS512' }, (err, token) => {
+			if (err)
+				return next(err);
+			return res.json({ token });
+		})
+	}),
 
 	register: (req, res, next) => {
 		const user = req.body;
@@ -94,27 +100,24 @@ module.exports = {
 		})
 	},
 
-	setUser: (req, res, next) => {
+	setUser: asyncHandler(async (req, res, next) => {
 		req.user = null;
 
 		if (!req.headers.authorization)
 			return next();
-		decodeAuthorization(req.headers.authorization)
-			.then(decoded => {
-				if (decoded && !decoded.stillNeedToTwoFA)
-					req.user = decoded;
-				return next();
-			})
-			.catch(() => {
-				return next(Boom.badGateway("Error in auth verification"));
-			})
-	},
+		var decoded = await decodeAuthorization(req.headers.authorization);
+		if (decoded && !decoded.stillNeedToTwoFA)
+			req.user = decoded;
 
-	requireUser: (req, res, next) => {
-		if (!req.user)
+		return next();
+	}),
+
+	requireUser: asyncHandler(async (req, res, next) => {
+		if (!req.user && !req.user.userId)
 			return next(Boom.forbidden("Must be logged to access this"));
-		next();
-	}
+
+		return next();
+	})
 }
 
 function decodeAuthorization(token, callback) {

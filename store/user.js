@@ -42,7 +42,7 @@ const user = {
 
 	},
 
-	getConversations: (userId) => {
+	getConversations: function(userId) {
 		return new Promise((resolve, reject) => {
 			var query = "SELECT m.*, u.user_id, u.first_name, u.last_name, u.user_image FROM messages m " +
 				`LEFT JOIN users u ON u.user_id=m.from_id AND m.from_id != ? ` +
@@ -102,15 +102,43 @@ const user = {
 		});
 	},
 
+	getTwoFA: (userId) => {
+		return new Promise(function(resolve, reject) {
+			var query = "SELECT two_fa_secret FROM users WHERE user_id=?";
+
+			pool.query(query, userId, (err, data) => {
+				if (err)
+					return reject(err);
+				else if (!data.length)
+					return reject(Boom.badData("No user found"));
+				return resolve(data[0].two_fa_secret);
+			})
+		});
+	},
+
 	saveTwoFA: (userId, secret) => {
 		return new Promise(function(resolve, reject) {
-			var query = "UPDATE users SET two_fa_secret = ? WHERE user_id = ?";
+			var query = "UPDATE users SET two_fa_secret=? WHERE user_id=? AND two_fa_secret IS NULL";
 
 			pool.query(query, [secret, userId], (err, data) => {
 				if (err)
 					return reject(err);
-				else if (data.affectedRows !== 1)
-					return reject(Boom.notAcceptable("Secret did not affected user or affected too many users"));
+				else if (data.affectedRows == 0)
+					return reject(Boom.badImplementation("No change"));
+				else if (data.affectedRows > 1)
+					return reject(Boom.badImplementation());
+				resolve();
+			})
+		});
+	},
+
+	removeTwoFA: (userId) => {
+		return new Promise(function(resolve, reject) {
+			pool.query("UPDATE users SET two_fa_secret=NULL WHERE user_id=?", userId, (err, data) => {
+				if (err)
+					return reject(err)
+				else if (!data.affectedRows)
+					return reject(Boom.badImplementation("No change"));
 				resolve();
 			})
 		});
@@ -244,32 +272,31 @@ const user = {
 		});
 	},
 
-	saveTransaction: (transaction) => {
+	saveDeposit: (transaction, address) => {
 		return new Promise(function(resolve, reject) {
-			// TODO Make SQL transaction
-			// TODO Check values sent
-			// TODO BE sure one transaction per deposit or payment (make unique key on hash)
-			if (["btc", "t_btc"].includes(transaction.currency))
-				var query = `UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`;
-			else
+			if (!["btc", "t_btc"].includes(transaction.currency) || !transaction.valueDeposit) // TODO Check all transaction requirments
 				return reject();
 
-			if (transaction.valueDeposit)
-				var value = transaction.valueDeposit;
-			else
-				return reject();
+			var value = transaction.valueDeposit;
+			var query = "INSERT INTO user_transactions SET ?";
 
 			pool.ftTransaction(function(db, next) {
-			    db.query("INSERT INTO user_transactions SET ?", snakeCaseKeys(transaction), function(err) {
+			    db.query(query, snakeCaseKeys(transaction), function(err) {
 			        if (err) return next(err);
 
-			        db.query(query, [value, transaction.userId], function(err) {
-			            return next(err);
-			        });
+					query = `UPDATE user_wallets SET balance = balance + ${ value } WHERE public_address=?`;
+					db.query(query, address, function(err) {
+				        if (err) return next(err);
+
+						query = `UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`;
+						db.query(query, [value, transaction.userId], function(err) {
+							return next(err);
+						});
+					});
 			    });
-			}, function(err) { // TODO SET BACK
-				// if (err)
-				// 	return reject(err);
+			}, function(err) {
+				if (err)
+					return reject(err);
 				resolve();
 			});
 		});
@@ -277,16 +304,16 @@ const user = {
 
 	// TODO BE FUCKING SURE CANT PAY BECAUSE OF STUPID DELAY OF SELECT
 	// TODO:120 Security check currency is always set in our code
-	checkAndPayPendingOrders: (userId, currency) => {
+	checkAndPayPendingOrders: function(userId, currency) {
 		return new Promise((resolve, reject) => {
-			pool.query(`SELECT amount_${ currency } AS value FROM users WHERE user_id=?`, [userId], (err, wallets) => {
+			pool.query(`SELECT amount_${ currency } AS value FROM users WHERE user_id=?`, userId, (err, wallets) => {
 				if (err)
 					return reject(err);
 				else if (wallets.length !== 1)
 					return Boom.notAcceptable();
 
 				var wallet = wallets[0];
-				var query = "SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.crypto_too_late=0 AND o.user_id=?";
+				var query = "SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.date > (NOW() - INTERVAL 30 MINUTE) AND o.user_id=?";
 				pool.query(query, [userId], (err, orders) => {
 					if (err)
 						return reject(err);
@@ -303,65 +330,64 @@ const user = {
 							stop = true;
 						}
 					})
-					payOrders(currency, ordersToPay, 0, [], function(err, ordersDone) {
+					this.payOrders(currency, ordersToPay, 0, [], function(err, ordersDone) {
 						if (err)
-							return reject();
+							return reject(err);
 						return resolve(ordersDone);
 					})
-					// UPDATE USER BALANCE + 2 TRANSACTION  USER + CONFIRM PAYMENT ORDER
 				})
 			})
 		});
+	},
 
-		function payOrders(currency, orders, i, ordersDone, callback) {
-			if (i >= orders.length) {
-				return callback(null, ordersDone);
-			} else {
-				var order = orders[i];
-				var query = "INSERT INTO user_transactions SET ?";
-				var currencyWOTest = ['t_btc', 't_eth'].includes(currency) ? currency.substring(2) : currency;
-				var payment = {
-					valueLocalSent: order[`price_${ currencyWOTest }`],
-					userId: order.user_id,
-					currency: currency,
-					orderId: order.order_id
-				}
-				var income = {
-					valueLocalReceived: order[`price_${ currencyWOTest }`],
-					userId: order.seller_id,
-					currency: currency,
-					orderId: order.order_id
-				}
-				pool.ftTransaction(function(db, next) {
-				    db.query(query, snakeCaseKeys(payment), function(err) {
-				        if (err) return next(err);
-
-						db.query(query, snakeCaseKeys(income), function(err) {
-					        if (err) return next(err);
-
-							query = `UPDATE users SET amount_${ currency } = amount_${ currency } - ? WHERE user_id=?`
-							db.query(query, [ payment.valueLocalSent, order.user_id ], function(err) {
-						        if (err) return next(err);
-
-								query = `UPDATE users SET amount_${ currency } = amount_${ currency } + ? WHERE user_id=?`
-								db.query(query, [ payment.valueLocalSent, order.seller_id ], function(err) {
-							        if (err) return next(err);
-
-									query = "UPDATE orders SET payed=1 WHERE order_id = ?"
-							        db.query(query, [ order.order_id ], function(err) {
-							            return next(err);
-							        });
-							    });
-						    });
-					    });
-				    });
-				}, function(err) {
-					if (err)
-						return callback(err);
-					ordersDone.push(orders[i].order_id);
-					payOrders(currency, orders, i + 1, ordersDone, callback);
-				});
+	payOrders: function(currency, orders, i, ordersDone, callback) {
+		if (i >= orders.length) {
+			return callback(null, ordersDone);
+		} else {
+			var order = orders[i];
+			var query = "INSERT INTO user_transactions SET ?";
+			var currencyWOTest = ['t_btc', 't_eth'].includes(currency) ? currency.substring(2) : currency;
+			var payment = {
+				valueLocalSent: order[`price_${ currencyWOTest }`],
+				userId: order.user_id,
+				currency: currency,
+				orderId: order.order_id
 			}
+			var income = {
+				valueLocalReceived: order[`price_${ currencyWOTest }`],
+				userId: order.seller_id,
+				currency: currency,
+				orderId: order.order_id
+			}
+			pool.ftTransaction((db, next) => {
+				db.query(query, snakeCaseKeys(payment), function(err) {
+					if (err) return next(err);
+
+					db.query(query, snakeCaseKeys(income), function(err) {
+						if (err) return next(err);
+
+						query = `UPDATE users SET amount_${ currency } = amount_${ currency } - ? WHERE user_id=?`
+						db.query(query, [ payment.valueLocalSent, order.user_id ], function(err) {
+							if (err) return next(err);
+
+							query = `UPDATE users SET amount_${ currency } = amount_${ currency } + ? WHERE user_id=?`
+							db.query(query, [ payment.valueLocalSent, order.seller_id ], function(err) {
+								if (err) return next(err);
+
+								query = "UPDATE orders SET payed=1 WHERE order_id = ?"
+								db.query(query, [ order.order_id ], function(err) {
+									return next(err);
+								});
+							});
+						});
+					});
+				});
+			}, (err) => {
+				if (err)
+					return callback(err);
+				ordersDone.push(orders[i].order_id);
+				this.payOrders(currency, orders, i + 1, ordersDone, callback);
+			});
 		}
 	}
 }

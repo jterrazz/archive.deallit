@@ -2,7 +2,7 @@ const amazonBaseURL = "https://s3.eu-west-3.amazonaws.com/the-crypto-market/";
 
 const env = {
 	devMode: process.env.NODE_ENV == "development",
-	CURRENCY_RATES_UPDATE_DELAY: 1000 * 60 * 1, // ms
+	CURRENCY_RATES_UPDATE_DELAY: 60 * 60, // seconds
 	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
 	TWO_FA_REGISTER_TIME: 60 * 60 * 2,
 	SENDGRID_API_KEY: "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",
@@ -19,7 +19,6 @@ const env = {
 	/* Bitcoin */
 	bitcoinUserName: "themaster",
 	bitcoinUserPassword: "Corsica20",
-	DECIMALS_PRICE_BTC: 5,
 }
 
 const devEnv = {

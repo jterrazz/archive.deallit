@@ -10,12 +10,21 @@ const	router =		require('express').Router(),
 // TODO:80 Do better URL
 //#Security:20 Refactor file w await
 
-router.post('/transactions', asyncHandler(async (req, res, next) => { //, auth.requireUser
-	req.user = {
-		userId: 5
-	}; // DELETE
+const blocktrail =	require('blocktrail-sdk'),
+blocktrailClient =		blocktrail.BlocktrailSDK({
+	apiKey: "77f704597ec021c7beabeead9da4e2f5ea098928",
+	apiSecret: "aa51f641f1f1e589f9b58877f535ca553160e031e",
+	network: env.devMode ? "tBTC" : "BTC",
+});
 
+// blocktrailClient.subscribeAddressTransactions('webhook-0', 'mvnWB9S6xBWssbD468DP39Tak3B17txbSN', 2, function(err, result) {
+// 	if (err)
+// 		console.log(err);
+//
+// 	// Save in redis exists
+// });
 
+router.post('/transactions', asyncHandler(async (req, res, next) => {
 
 	var transaction = {
 		currency: env.devMode ? 't_btc' : 'btc',
@@ -29,19 +38,20 @@ router.post('/transactions', asyncHandler(async (req, res, next) => { //, auth.r
 	transaction.value = addressesObj[adresses[0]];
 
 	//Listen for adress directly and not sql call ? probably not because of adding funds to user
-	var userId = dbUser.getUserForWalletAdresses(adresses);
+	var userId = await dbUser.getUserForWalletAdresses(adresses);
 	Events.emit(`user-${ userId }:deposit`, transaction);
 
 	if (transaction.confirmations >= 2) {
 		// Check confirmations from multiple sources
 		var transactionSql = {
 			valueDeposit: transaction.value,
-			userId: req.user.userId,
+			userId: userId,
 			currency: transaction.currency,
 			hash: transaction.hash
 		}
-		await dbUser.saveTransaction(transactionSql);
-		var orders = await dbUser.checkAndPayPendingOrders(req.user.userId, transaction.currency);
+		// TODO Check values sent
+		await dbUser.saveDeposit(transactionSql, adresses[0]);
+		var orders = await dbUser.checkAndPayPendingOrders(userId, transaction.currency);
 		Events.emit(`user-${ userId }:order-confirmation`, orders);
 	}
 	res.end();

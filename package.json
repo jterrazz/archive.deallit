@@ -7,6 +7,7 @@
 		"dev": "NODE_ENV=development nodemon server.js",
 		"prod": "NODE_ENV=production node server.js",
 		"export": "NODE_ENV=export node server.js",
+		"pm2d": "pm2 -i max --name \"mm-api\" start npm -- run dev --",
 		"pm2": "pm2 -i max --name \"mm-api\" start npm -- run prod --"
 	},
 	"author": "Terrazzoni Jean-Baptiste",
@@ -38,6 +39,8 @@
 		"snakecase-keys": "^1.1.1",
 		"socket.io": "^2.0.4",
 		"speakeasy": "^2.0.0",
-		"validator": "^9.2.0"
+		"stats-lite": "^2.1.0",
+		"validator": "^9.2.0",
+		"winston": "^2.4.0"
 	}
 }

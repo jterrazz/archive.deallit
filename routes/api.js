@@ -11,9 +11,8 @@ const	Boom =			require('boom'),
 		checker =		require('../plugins/checker'),
 		bitcoin =		require('../plugins/bitcoin'),
 		cacheDB =		require('../plugins/caching'),
-		storageServer = require('../plugins/storage-server');
-
-const	speakeasy =		require('speakeasy');
+		storageServer = require('../plugins/storage-server'),
+		speakeasy =		require('speakeasy');
 
 // TODO:240 require user and check user equal change
 
@@ -78,44 +77,59 @@ router.post('/auth/register', auth.register);
 router.post('/auth/login-two-fa', auth.confirmTwoFA);
 
 
-router.get('/auth/2fa', auth.requireUser, (req, res, next) => {
-	var secret = speakeasy.generateSecret();
-	var base32secret = secret.base32;
-	var qrData = secret.otpauth_url;
+router.route('/auth/manage-2fa')
+	.get(auth.requireUser, (req, res, next) => {
+		var secret = speakeasy.generateSecret();
+		var base32secret = secret.base32;
+		var qrData = secret.otpauth_url;
 
-	cacheDB.set(`user-${ req.user.userId }:twoFA-secret`, base32secret, 'EX', env.TWO_FA_REGISTER_TIME, (err, ret) => {
-		if (err)
-			return next(err);
-		res.json({ secret: qrData });
-	});
-})
+		cacheDB.set(`user-${ req.user.userId }:twoFA-secret`, base32secret, 'EX', env.TWO_FA_REGISTER_TIME, (err, ret) => {
+			if (err)
+				return next(err);
+			res.json({ secret: qrData });
+		});
+	})
 
-router.post('/auth/2fa', auth.requireUser, (req, res, next) => { // TODO CHeck is not activated
-	cacheDB.get(`user-${ req.user.userId }:twoFA-secret`, async (err, base32secret) => {
-		if (err)
-			return next(err);
-		else if (!base32secret)
-			return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
-		else if (!req.body.confirmation)
-			return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
+	.post(auth.requireUser, (req, res, next) => {
+		if (!req.body.code)
+			return next(Boom.resourceGone("No code provided"));
 
+		cacheDB.get(`user-${ req.user.userId }:twoFA-secret`, async (err, base32secret) => {
+			if (err)
+				return next(err);
+			else if (!base32secret)
+				return next(Boom.resourceGone("Could not find 2FA data on server, please restart the process"));
+
+			var verified = speakeasy.totp.verify({
+				secret: base32secret,
+				encoding: 'base32',
+				token: req.body.code,
+			});
+
+			if (!verified)
+				return next(Boom.unauthorized("Bad confirmation code"));
+			await dbUser.saveTwoFA(req.user.userId, base32secret);
+
+			res.sendStatus(200);
+		});
+	})
+
+	.delete(auth.requireUser, asyncHandler(async (req, res, next) => {
+		var twoFACode = req.query.code;
+
+		var secret = await dbUser.getTwoFA(req.user.userId);
 		var verified = speakeasy.totp.verify({
-			secret: base32secret,
+			secret: secret,
 			encoding: 'base32',
-			token: req.body.confirmation,
+			token: twoFACode,
 		});
 
 		if (!verified)
-			return next(Boom.unauthorized("Bad confirmation code"));
-		await dbUser.saveTwoFA(req.user.userId, base32secret);
+			return next(Boom.forbidden());
+		await dbUser.removeTwoFA(req.user.userId);
 
 		res.sendStatus(200);
-	});
-})
-
-router.delete('/auth/2fa', auth.requireUser, (req, res, next) => {
-
-})
+	}))
 
 /**
  * User status/informations
