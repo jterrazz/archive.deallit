@@ -1,11 +1,34 @@
 //#Security:0 !!!!!!!!!!!!! CONTROL ORIGIN (ip of bitcoin node only)
 //# DONT LISTEN TO THIS ON MAIN SERVER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! (hacker can send this info)
 const	router =		require('express').Router(),
-		Events =		require('../plugins/events-handler'),
+		Events =		require('../libs/events'),
+		bitcoinLib =		require('../libs/currencies/bitcoin'),
 		dbUser =		require('../store/user'),
 		asyncHandler =	require('../middlewares/async'),
 		auth =			require('../middlewares/auth'),
 		env =			require('../config/env');
+
+/**
+ * If event is missed, libs/tasks will eventually check addresses
+ */
+
+var zmq = require('zeromq'),
+sub = zmq.socket('sub');
+
+sub.subscribe('rawtx');
+sub.connect('tcp://127.0.0.1:28332');
+
+sub.on('message', function(header, body){
+	if (header == 'rawtx') {
+		console.log(bitcoinLib.utils.decodeRawTransaction(body));;
+		// AT FIRST CONNNECTION RESEND EVENTS NOT CONFIRMED
+		// console.log(body);
+		// Add transaction to temp waiting for confirmations
+		//
+	}
+});
+
+
 
 // TODO:80 Do better URL
 //#Security:20 Refactor file w await

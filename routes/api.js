@@ -7,27 +7,16 @@ const	Boom =			require('boom'),
 		dbUser =		require('../store/user'),
 		dbMarket =		require('../store/market'),
 		dbProduct =		require('../store/product'),
-		tasks =			require('../plugins/tasks'),
-		checker =		require('../plugins/checker'),
-		bitcoin =		require('../plugins/bitcoin'),
-		cacheDB =		require('../plugins/caching'),
-		storageServer = require('../plugins/storage-server'),
+		tasks =			require('../libs/tasks'),
+		checker =		require('../libs/checker'),
+		bitcoinLib =		require('../libs/currencies/bitcoin'),
+		cacheDB =		require('../libs/redis'),
+		storageServer = require('../libs/storage'),
 		speakeasy =		require('speakeasy');
 
 // TODO:240 require user and check user equal change
 
 // TODO Parse all inputs
-
-/**
- * #Important:0 Remove and create wallet when needed
- */
-
-router.post("/createWallets", (req, res) => {
-	const env = require('../config/env');
-
-
-	res.end();
-})
 
 router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
 	var currency = req.params.currency;
@@ -45,8 +34,8 @@ router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, 
 
 	switch (currency) {
 		case 'BTC':
-			var wif = bitcoin.createRandomWIF();
-			var publicAddress = bitcoin.getLegacyAddress(wif);
+			var wif = bitcoinLib.utils.createRandomWIF();
+			var publicAddress = bitcoinLib.utils.getLegacyAddress(wif);
 
 			await dbUser.saveWallet(type, 5, publicAddress, wif, false);
 			break;
@@ -60,6 +49,7 @@ router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, 
  * File uploads
  */
 
+// Add limits
 router.post('/upload/image', auth.requireUser, upload.handleImage, (req, res) => {
 	res.json({
 		filename: req.file.filename,
@@ -149,7 +139,9 @@ router.route('/me')
 		// if (safeUser.mail)
 		// check mail is included
 		if (safeUser.userImage)
-			await storageServer.sendFiles([safeUser.userImage]);
+			var images = await storageServer.sendFiles([safeUser.userImage]);
+		// TODO Add images effectively sent
+		// If Sql error remove Image from DB
 		await dbUser.patch(req.user.userId, safeUser);
 		res.sendStatus(200);
 	}))
@@ -207,9 +199,9 @@ router.route('/orders')
 		var safeOrder = checker.rawOrder(req.body);
 		var product = await dbProduct.get(safeOrder.productId);
 
-		safeOrder.price_usd = product.prices.usd;
-		safeOrder.price_eur = product.prices.eur;
-		safeOrder.price_btc = product.prices.btc;
+		safeOrder.priceUsd = product.prices.usd;
+		safeOrder.priceEur = product.prices.eur;
+		safeOrder.priceBtc = product.prices.btc;
 		safeOrder.userId = req.user.userId;
 		await dbUser.insertOrder(safeOrder);
 
@@ -217,25 +209,26 @@ router.route('/orders')
 	}))
 
 router.route('/order/:orderId')
-	.get(auth.requireUser, asyncHandler(async (req, res) => {
+	.get(auth.requireUser, asyncHandler(async (req, res, next) => {
 		var order = await dbUser.getOrder(req.params.orderId);
 
+		if (order.user_id !== req.user.userId)
+			return next(Boom.unauthorized())
 		res.json(order);
 	}))
 
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
-		//TODO:50 Check is possible and userid ok
-		await dbUser.cancelOrder(req.user.userId, req.params.orderId)
+		await dbUser.cancelOrder(req.user.userId, req.params.orderId); // Verify it is possible for this user and order is cancellable
 
-		res.sendStatus(200)
+		res.sendStatus(200);
 	}))
 
 // TODO Messages to ID or to Product ? Or mix of both
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
-		var messages = await dbUser.getMessages(req.user.userId, req.params.contactId)
+		var messages = await dbUser.getMessages(req.user.userId, req.params.contactId);
 
-		res.json(messages)
+		res.json(messages);
 	}))
 
 	.post(auth.requireUser, asyncHandler(async (req, res, next) => {

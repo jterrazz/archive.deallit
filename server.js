@@ -52,11 +52,15 @@ if (env.devMode) {
  * SERVER
  */
 
+Array.prototype.diff = function(arr2) { // TODO Other file ?
+	return this.filter(x => !arr2.includes(x));
+};
+
+require('./libs/tasks');
 require('./routes')(app);
 
 const server = http.listen(env.API_PORT, () => {
 	console.log(`\x1b[32mServer is running on port :\x1b[0m ${ server.address().port } 👍`);
-	require('./plugins/tasks');
 })
 
 //TODO:220 all currency converted server side --> redis store currencies

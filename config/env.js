@@ -1,3 +1,9 @@
+['NODE_ENV'].forEach((name) => {
+	if (!process.env[name]) {
+		throw new Error(`Environment variable ${name} is missing`)
+	}
+})
+
 const amazonBaseURL = "https://s3.eu-west-3.amazonaws.com/the-crypto-market/";
 
 const env = {
@@ -17,18 +23,18 @@ const env = {
 	imagesFolder: amazonBaseURL + 'public/images/',
 
 	/* Bitcoin */
-	bitcoinUserName: "themaster",
-	bitcoinUserPassword: "Corsica20",
+	BITCOIN_NODE_USER: "themaster",
+	BITCOIN_NODE_PASSWORD: "Corsica20",
 }
 
 const devEnv = {
 	API_PORT: 8081,
-	socketPort: 4242,
+	SOCKET_PORT: 4242,
 }
 
 const prodEnv = {
 	API_PORT: 443,
-	socketPort: 442,
+	SOCKET_PORT: 442,
 }
 
 Object.assign(env, env.devMode ? devEnv : prodEnv);

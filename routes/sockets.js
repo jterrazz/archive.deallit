@@ -1,22 +1,26 @@
 const	server =		require('http').createServer(),
 		io =			require('socket.io')(server),
-		env =				require('../config/env'),
-		Events =		require('../plugins/events-handler');
+		env =			require('../config/env'),
+		Events =		require('../libs/events');
 
 io.on('connection', function(client) {
 	client.on('monitor-payments', function(userId) {
-		Events.on(`user-${ userId }:deposit`, function(transaction) {
+		var handleDeposit = function(transaction) {
 			client.emit('deposit', transaction);
-		});
+		}
 
-		Events.on(`user-${ userId }:order-confirmation`, function(orders) {
+		var handleOrderConfirmation = function(orders) {
 			client.emit('order-confirmation', orders);
-		})
+		}
+
+		Events.on(`user-${ userId }:deposit`, handleDeposit);
+		Events.on(`user-${ userId }:order-confirmation`, handleOrderConfirmation);
 
 		client.on('disconnect', function() {
-			// TODO Remove from Events
+			Events.removeListener(`user-${ userId }:deposit`, handleDeposit);
+			Events.removeListener(`user-${ userId }:order-confirmation`, handleOrderConfirmation);
 		});
 	})
 });
 
-server.listen(4242);
+server.listen(env.SOCKET_PORT);

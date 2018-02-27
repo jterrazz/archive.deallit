@@ -1,6 +1,6 @@
 const	Boom =			require('boom'),
 		pool =			require('../store'),
-		analyzer =		require('../plugins/analyzer'),
+		analyzer =		require('../libs/analyzer'),
 		snakeCaseKeys =	require('snakecase-keys');
 
 const user = {
@@ -312,7 +312,7 @@ const user = {
 				else if (wallets.length !== 1)
 					return Boom.notAcceptable();
 
-				var wallet = wallets[0];
+				var wallet = wallets[0]; // TODO Add Price XXXX Is defined in select orders
 				var query = "SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.date > (NOW() - INTERVAL 30 MINUTE) AND o.user_id=?";
 				pool.query(query, [userId], (err, orders) => {
 					if (err)

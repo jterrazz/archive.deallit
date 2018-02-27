@@ -1,7 +1,7 @@
-const	env =			require('../config/env'),
+const	env =			require('../../config/env'),
 		axios =			require('axios'),
-		cacheDB =		require('./caching')
-		Events =		require('../plugins/events-handler'),
+		cacheDB =		require('../redis')
+		Events =		require('../events'),
 		stats =			require('stats-lite');
 
 // TODO:110 SHOW A PAGE WITH EXCHANGE PRICES

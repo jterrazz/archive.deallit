@@ -1,4 +1,4 @@
-const currenciesPlugin = require('../plugins/currencies');
+const currenciesPlugin = require('./currencies');
 const env = require('../config/env');
 
 module.exports = {

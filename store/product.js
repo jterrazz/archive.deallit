@@ -1,6 +1,6 @@
 const	Boom =			require('boom'),
 		pool =			require('../store'),
-		analyzer =		require('../plugins/analyzer'),
+		analyzer =		require('../libs/analyzer'),
 		validator =		require('validator'),
 		snakeCaseKeys = require('snakecase-keys');
 
