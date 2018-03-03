@@ -1,6 +1,12 @@
 # mymarket-server
 
-> Work on decentralized marketplaces and online commerce
+> A marketplace with decentralized applications
+
+## Requirements
+- MySQL
+- Redis
+- ZeroMQ
+- Bitcoind (bitcoin-core)
 
 ## Build Setup
 
@@ -8,9 +14,15 @@
 # install dependencies
 npm install
 
-# serve api at localhost:8081
-nodemon server.js
+# command for development
+npm run dev
 
 # command for production
-pm2 start server.js
+npm run prod
+
+# cluster mode for development
+npm run pm2-dev
+
+# cluster mode for production
+npm run pm2-prod
 ```

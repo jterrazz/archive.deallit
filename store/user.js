@@ -1,5 +1,6 @@
 const	Boom =			require('boom'),
 		pool =			require('../store'),
+		env =			require('../config/env'),
 		analyzer =		require('../libs/analyzer'),
 		snakeCaseKeys =	require('snakecase-keys');
 
@@ -284,8 +285,8 @@ const user = {
 			    db.query(query, snakeCaseKeys(transaction), function(err) {
 			        if (err) return next(err);
 
-					query = `UPDATE user_wallets SET balance = balance + ${ value } WHERE public_address=?`;
-					db.query(query, address, function(err) {
+					query = `UPDATE user_wallets SET balance = balance + ?, total_received = total_received + ? WHERE public_address=?`;
+					db.query(query, [value, value, address], function(err) {
 				        if (err) return next(err);
 
 						query = `UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`;
@@ -310,15 +311,15 @@ const user = {
 				if (err)
 					return reject(err);
 				else if (wallets.length !== 1)
-					return Boom.notAcceptable();
+					return reject(Boom.notAcceptable("No user found"));
 
 				var wallet = wallets[0]; // TODO Add Price XXXX Is defined in select orders
-				var query = "SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.date > (NOW() - INTERVAL 30 MINUTE) AND o.user_id=?";
+				var query = `SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) AND o.user_id=?`;
 				pool.query(query, [userId], (err, orders) => {
 					if (err)
 						return reject(err);
 					else if (!orders.length)
-						return resolve("nothing-to-pay"); // TODO Better
+						return resolve("no-orders"); // TODO Better
 					var ordersToPay = [];
 					var stop = false;
 					orders.forEach(order => {

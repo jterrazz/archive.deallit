@@ -49,24 +49,48 @@ if (env.devMode) {
 }
 
 /**
- * SERVER
+ * CHANGE FILE
  */
 
-Array.prototype.diff = function(arr2) { // TODO Other file ?
+Array.prototype.diff = function(arr2) {
 	return this.filter(x => !arr2.includes(x));
 };
 
-require('./libs/tasks');
-require('./routes')(app);
+Promise.settle = function(promises) {
+	return Promise.all(promises.map(function(p) {
+		// make sure any values or foreign promises are wrapped in a promise
+		return Promise.resolve(p).catch(function(err) {
+			// make sure error is wrapped in Error object so we can reliably detect which promises rejected
+			if (err instanceof Error) {
+				return err;
+			} else {
+				var errObject = new Error();
+				errObject.rejectErr = err;
+				return errObject;
+			}
+		});
+	}));
+}
 
-const server = http.listen(env.API_PORT, () => {
-	console.log(`\x1b[32mServer is running on port :\x1b[0m ${ server.address().port } 👍`);
-})
+/**
+ * SERVER
+ */
 
-//TODO:220 all currency converted server side --> redis store currencies
-//TODO:140 Check all routes are number or escaped
-//TODO:180 Not found page
-//TODO:130 Cancel order
+const startServer = async () => {
+	await require('./libs/tasks').start();
+
+	require('./routes')(app);
+	const server = http.listen(env.API_PORT, () => {
+		console.log(`\x1b[32mServer is running on port :\x1b[0m ${ server.address().port } 👍`);
+	})
+};
+
+startServer();
+
+// TODO:220 all currency converted server side --> redis store currencies
+// TODO:140 Check all routes are number or escaped
+// TODO:180 Not found page
+// TODO:130 Cancel order
 // TODO:90 Do store list in home and categories
 // REfactoring routes avec analyse in routes et uniquement db in db
 // Optimise Sql request by opening connection for 2 requests

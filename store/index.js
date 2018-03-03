@@ -19,6 +19,11 @@ function testConnection() {
 };
 
 // TODO UNDERSTAND THIS
+
+/**
+ * Transaction wrapper
+ */
+
 pool.ftTransaction = function(body, callback) {
     pool.getConnection(function(err, conn) {
         if (err) return callback(err);

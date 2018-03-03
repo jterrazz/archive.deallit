@@ -24,9 +24,9 @@ router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, 
 	if (['BTC', 'ETH'].indexOf(currency) < 0)
 		return next(Boom.badData("Wallet currency is invalid"));
 	if (currency == 'BTC')
-		var type = env.devMode ? 'tBTC' : 'BTC';
+		var type = env.devMode ? 't_btc' : 'btc';
 	else if (currency == 'ETH')
-		var type = env.devMode ? 'tETH' : 'ETH';
+		var type = env.devMode ? 't_eth' : 'eth';
 
 	var data = await dbUser.getWalletForUser(req.user.userId, type, false);
 	if (data)

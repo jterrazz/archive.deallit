@@ -1,5 +1,7 @@
 const	prefixMonitored = "//monitoring-bitcoin-address:",
 		bitcoinClient = require('./client'),
+		pool = require('../../../store'),
+		env = require('../../../config/env'),
 		redisClient = require('../../redis');
 
 module.exports = {
@@ -25,29 +27,61 @@ module.exports = {
 		});
 	},
 
-	hardUpdateMonitoredAddresses: async function() {
-		try {
-			var currentlyMonitored = await bitcoinClient.getAddressesByAccount("");
-			for (var i = 0; i < currentlyMonitored.length; i++) {
-				currentlyMonitored[i] = prefixMonitored + currentlyMonitored[i];
-			}
-
-			redisClient.keys(`${ prefixMonitored }*`, (err, dbMonitored) => {
-				if (err) throw err;
-
-				var diff = currentlyMonitored.diff(dbMonitored);
-				var multi = redisClient.multi();
-				for (var i = 0; i < diff.length; i++) {
-					multi.set(diff[i], true);
+	hardCacheMonitoredAddresses: function() { // TODO Also check if some in cache and not in node
+		return new Promise(async function(resolve, reject) {
+			try {
+				var currentlyMonitored = await bitcoinClient.getAddressesByAccount("");
+				for (var i = 0; i < currentlyMonitored.length; i++) {
+					currentlyMonitored[i] = prefixMonitored + currentlyMonitored[i];
 				}
-				multi.exec(function(err, replies) {
+
+				redisClient.keys(`${ prefixMonitored }*`, (err, dbMonitored) => {
 					if (err) throw err;
-					console.log("REDIS: Added %d new bitcoin monitoring addresses", diff.length);
+
+					var diff = currentlyMonitored.diff(dbMonitored);
+					var multi = redisClient.multi();
+					for (var i = 0; i < diff.length; i++) {
+						multi.set(diff[i], true);
+					}
+					multi.exec(function(err, replies) {
+						if (err) throw err;
+
+						return resolve(diff.length);
+					})
 				})
-			})
-		} catch (err) {
-			console.error("REDIS: Error updating bitcoin monitored addresses", err);
-			// TODO Stop server ?
-		}
+			} catch (err) {
+				return reject(err);
+			}
+		});
+	},
+
+	hardUpdateMonitoredAddresses: function() {
+		return new Promise(async (resolve, reject) => {
+			try {
+				var currentlyMonitored = await bitcoinClient.getAddressesByAccount("");
+				var allToMonitor = [];
+
+				pool.query("SELECT public_address FROM user_wallets WHERE type=?", [env.devMode ? 't_btc' : 'btc'], (err, walletsSql) => {
+					for (var i = 0; i < walletsSql.length; i++) {
+						allToMonitor[i] = walletsSql[i].public_address;
+					}
+
+					listenToAddresses = [];
+					var diff = allToMonitor.diff(currentlyMonitored);
+					diff.forEach(toMonitor => {
+						listenToAddresses.push(this.listenToAddress(toMonitor)); // TODO Error not catched ?
+					})
+					Promise.all(listenToAddresses)
+						.then(() => {
+							return resolve();
+						})
+						.catch((err) => {
+							return reject(err);
+						})
+				})
+			} catch (err) {
+				return reject(err);
+			}
+		});
 	},
 }

@@ -2,7 +2,7 @@
 //# DONT LISTEN TO THIS ON MAIN SERVER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! (hacker can send this info)
 const	router =		require('express').Router(),
 		Events =		require('../libs/events'),
-		bitcoinLib =		require('../libs/currencies/bitcoin'),
+		bitcoinLib =	require('../libs/currencies/bitcoin'),
 		dbUser =		require('../store/user'),
 		asyncHandler =	require('../middlewares/async'),
 		auth =			require('../middlewares/auth'),
@@ -24,7 +24,6 @@ sub.on('message', function(header, body){
 		// AT FIRST CONNNECTION RESEND EVENTS NOT CONFIRMED
 		// console.log(body);
 		// Add transaction to temp waiting for confirmations
-		//
 	}
 });
 

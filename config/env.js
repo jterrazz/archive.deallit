@@ -11,6 +11,7 @@ const env = {
 	CURRENCY_RATES_UPDATE_DELAY: 60 * 60, // seconds
 	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
 	TWO_FA_REGISTER_TIME: 60 * 60 * 2,
+	ORDER_VALIDITY: 30,
 	SENDGRID_API_KEY: "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",
 
 	/* Auth token (time in sec) */
