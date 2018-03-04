@@ -65,6 +65,10 @@ Promise.settle = function(promises) {
 	return Promise.all(promises.map(reflect))
 }
 
+Promise.handler = function() {
+
+}
+
 /**
  * SERVER
  */

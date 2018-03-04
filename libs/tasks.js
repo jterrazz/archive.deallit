@@ -31,7 +31,7 @@ const checkOrders = function() {
 		})
 	});
 }
-
+// When block found, check to confirm pending txs and also remove from redis the unconfirmed
 module.exports = {
 
 	/**
