@@ -15,7 +15,6 @@ const	Boom =			require('boom'),
 		speakeasy =		require('speakeasy');
 
 // TODO:240 require user and check user equal change
-
 // TODO Parse all inputs
 
 router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
@@ -40,7 +39,7 @@ router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, 
 			await dbUser.saveWallet(type, 5, publicAddress, wif, false);
 			break;
 		case 'ETH':
-			return next("ETH not supported yet");
+			return next(Error("ETH not supported yet"));
 	}
 	res.json({ publicAddress: publicAddress });
 }))
@@ -254,7 +253,7 @@ router.get('/s/:searched', asyncHandler(async (req, res) => {
 	res.json(products);
 }))
 
-router.get('/products', asyncHandler(async (req, res) => {
+router.get('/products', asyncHandler(async (req, res, next) => {
 	var products = await dbProduct.getMany(req.query);
 
 	res.json(products);

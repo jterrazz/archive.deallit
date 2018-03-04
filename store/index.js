@@ -1,5 +1,6 @@
 let configMysql = require('../config/mysql.json');
 
+const logger = require('../libs/logger');
 const mysql = require('mysql2');
 const mysqlPromise = require('mysql2/promise');
 const pool = mysql.createPool(configMysql);
@@ -7,17 +8,18 @@ const poolPromise = mysqlPromise.createPool(configMysql);
 
 testConnection();
 
-function testConnection() {
-	pool.query('SELECT 1 + 1 AS solution', (err) => {
+async function testConnection() {
+	try {
+		await poolPromise.query('SELECT 1 + 1 AS solution');
+		logger.info("MySQL connected");
+	} catch (err) {
 		if (err && err.code == 'ECONNREFUSED') {
-			console.log("Mysql not connected");
+			logger.error("Mysql not connected");
 			setTimeout(testConnection, 3000);
 		} else if (err) {
-			console.log(err);
-		} else {
-			console.log("\x1b[36mMySQL:\x1b[0m connected");
+			logger.error(err);
 		}
-	});
+	}
 };
 
 /**

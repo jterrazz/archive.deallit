@@ -5,7 +5,8 @@ const	env =			require('./config/env'),
 		jsonfile =		require('jsonfile'),
 		bodyParser =	require('body-parser'),
 		responseTime =	require('response-time'),
-		camelcaseKeys = require('camelcase-keys');
+		camelcaseKeys = require('camelcase-keys'),
+		logger =		require('./libs/logger');
 
 const	express =		require('express'),
 		app =			express(),
@@ -65,10 +66,6 @@ Promise.settle = function(promises) {
 	return Promise.all(promises.map(reflect))
 }
 
-Promise.handler = function() {
-
-}
-
 /**
  * SERVER
  */
@@ -79,10 +76,10 @@ const startServer = async () => {
 
 		require('./routes')(app);
 		const server = http.listen(env.API_PORT, () => {
-			console.log(`\x1b[36mServer:\x1b[0m listening on ${ server.address().port }`);
+			logger.info(`Server listening`, {port: server.address().port});
 		})
 	} catch (err) {
-		console.log(err);
+		logger.error(err);
 		return process.exit();
 	}
 };

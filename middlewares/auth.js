@@ -123,24 +123,20 @@ module.exports = {
 function decodeAuthorization(token, callback) {
 	return new Promise(function(resolve, reject) {
 		if (!token)
-			return reject();
+			return reject(Error("No token provided"));
+
 		var parts = token.split(' ');
+		if (parts.length != 2)
+			return reject(Error("Bad token format"));
 
-		if (parts.length == 2) {
-			var scheme = parts[0],
-				credentials = parts[1];
-
-			if (/^Bearer$/i.test(scheme)) {
-				jwt.verify(credentials, cert, (err, decoded) => {
-					if (err)
-						return reject(err);
-					return resolve(decoded);
-				})
-			} else {
-				return reject();
-			}
-		} else {
-			return reject();
-		}
+		var scheme = parts[0],
+			credentials = parts[1];
+		if (!(/^Bearer$/i.test(scheme)))
+			return reject(Error("Bad token scheme"));
+		jwt.verify(credentials, cert, (err, decoded) => {
+			if (err)
+				return reject(err);
+			return resolve(decoded);
+		})
 	});
 }

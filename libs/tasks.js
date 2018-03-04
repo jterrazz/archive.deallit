@@ -1,36 +1,26 @@
 let env = require('../config/env');
 
 const findRemove = require('find-remove'),
-	pool = require('../store').pool,
+	pool = require('../store').poolPromise,
 	dbUser = require('../store/user'),
 	Events = require('./events'),
 	bitcoinLib = require('./currencies/bitcoin');
 
-const checkOrders = function() {
-	return new Promise(function(resolve, reject) {
-		var query = `SELECT user_id FROM orders WHERE payed=0 AND date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) GROUP BY user_id`;
+const checkOrders = async () => {
+	var query = `SELECT user_id FROM orders WHERE payed=0 AND date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) GROUP BY user_id`;
+	var [users] = await pool.query(query);
+	var ftCheckOrders = [];
+	for (var i = 0; i < users.length; i++) {
+		ftCheckOrders[i] = dbUser.checkAndPayPendingOrders(users[i].user_id, env.devMode ? 't_btc' : 'btc')
+	}
+	var payedPerUser = await Promise.all(ftCheckOrders);
 
-		pool.query(query, async (err, users) => {
-			if (err) return reject(err);
-
-			var ftCheckOrders = [];
-			for (var i = 0; i < users.length; i++) {
-				ftCheckOrders[i] = dbUser.checkAndPayPendingOrders(users[i].user_id, env.devMode ? 't_btc' : 'btc')
-			}
-
-			try {
-				var payedPerUser = await Promise.all(ftCheckOrders);
-				// TODO Implement we restart server and user waits for payments
-				// for (var i = 0; i < payedPerUser.length; i++) {
-				// 	Events.emit(`user-${ payedPerUser[i].userId }:order-confirmation`, payedPerUser[i].ordersDone);
-				// }
-				return resolve();
-			} catch (err) {
-				return reject(err);
-			}
-		})
-	});
+	// TODO Implement we restart server and user waits for payments
+	// for (var i = 0; i < payedPerUser.length; i++) {
+	// 	Events.emit(`user-${ payedPerUser[i].userId }:order-confirmation`, payedPerUser[i].ordersDone);
+	// }
 }
+
 // When block found, check to confirm pending txs and also remove from redis the unconfirmed
 module.exports = {
 

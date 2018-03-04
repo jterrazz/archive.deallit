@@ -1,7 +1,6 @@
 //#Security:0 !!!!!!!!!!!!! CONTROL ORIGIN (ip of bitcoin node only)
 //# DONT LISTEN TO THIS ON MAIN SERVER !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! (hacker can send this info)
-const	router =		require('express').Router(),
-		Events =		require('../libs/events'),
+const	Events =		require('../libs/events'),
 		bitcoinLib =	require('../libs/currencies/bitcoin'),
 		dbUser =		require('../store/user'),
 		asyncHandler =	require('../middlewares/async'),
@@ -26,7 +25,6 @@ sub.on('message', function(header, body){
 		// Add transaction to temp waiting for confirmations
 	}
 });
-
 
 // router.post('/transactions', asyncHandler(async (req, res, next) => {
 //
@@ -60,5 +58,3 @@ sub.on('message', function(header, body){
 // 	}
 // 	res.end();
 // }))
-
-module.exports = router;

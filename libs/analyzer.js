@@ -56,27 +56,21 @@ module.exports = {
 				item.tags = [];
 		})
 	},
-	// TODO Prices in satoshis
-	setPrices: (products) => {
-		return new Promise((resolve, reject) => {
-			var ftArray = [];
 
-			products.forEach(product => {
-				ftArray.push(currenciesPlugin.oneToMany(product.price_usd, product.price_eur));
-			})
-			Promise.all(ftArray)
-				.then(ret => {
-					ret.forEach((newPrices, i) => {
-						newPrices.usd = Number(newPrices.usd).toFixed(2);
-						newPrices.eur = Number(newPrices.eur).toFixed(2);
-						newPrices.btc = newPrices.btc;
-						products[i].prices = newPrices;
-					})
-					return resolve();
-				})
-				.catch(err => {
-					return reject(err);
-				})
-		});
+	// TODO Prices in satoshis
+	setPrices: async (products) => {
+		var ftArray = [];
+
+		products.forEach(product => {
+			ftArray.push(currenciesPlugin.oneToMany(product.price_usd, product.price_eur));
+		})
+		var ret = await Promise.all(ftArray);
+
+		ret.forEach((newPrices, i) => {
+			newPrices.usd = Number(newPrices.usd).toFixed(2);
+			newPrices.eur = Number(newPrices.eur).toFixed(2);
+			newPrices.btc = newPrices.btc;
+			products[i].prices = newPrices;
+		})
 	}
 }

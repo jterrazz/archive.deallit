@@ -46,18 +46,18 @@ const createItemObject = (file, fileName) => {
 
 const uploadToAWS = (fileName, path) => {
 	return new Promise (async (resolve, reject) => {
-		file = fs.createReadStream(path)
+		file = fs.createReadStream(path);
 		file.on('error', (err) => {
-			return reject(err)
+			return reject(err);
 		})
 
 		try {
-			await createMainBucket()
-			await createItemObject(file, fileName)
+			await createMainBucket();
+			await createItemObject(file, fileName);
 
-			return resolve(fileName)
+			return resolve(fileName);
 		} catch (err) {
-			return reject(err)
+			return reject(err);
 		}
 	})
 }
@@ -67,7 +67,7 @@ module.exports = {
 		var ftArray = [];
 
 		if (!filesArray || !filesArray.length) // TODO Also check names files are correct
-			return new Promise((resolve, reject) => resolve())
+			return Promise.resolve();
 
 		filesArray.forEach((filename) => {
 			if (filename) // TODO Check correspond to user upload and exist

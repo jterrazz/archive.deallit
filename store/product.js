@@ -61,8 +61,8 @@ const product = {
 				try {
 					await analyzer.setPrices(products);
 					return resolve(products);
-				} catch (e) {
-					return reject(e);
+				} catch (err) {
+					return reject(err);
 				}
 			})
 		})
