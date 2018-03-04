@@ -1,28 +1,33 @@
 let env = require('../config/env');
 
 const findRemove = require('find-remove'),
-	pool = require('../store'),
+	pool = require('../store').pool,
 	dbUser = require('../store/user'),
+	Events = require('./events'),
 	bitcoinLib = require('./currencies/bitcoin');
 
 const checkOrders = function() {
 	return new Promise(function(resolve, reject) {
-		pool.query(`SELECT user_id FROM orders WHERE payed=0 AND date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) GROUP BY user_id`, (err, users) => {
+		var query = `SELECT user_id FROM orders WHERE payed=0 AND date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) GROUP BY user_id`;
+
+		pool.query(query, async (err, users) => {
 			if (err) return reject(err);
 
 			var ftCheckOrders = [];
 			for (var i = 0; i < users.length; i++) {
-				ftCheckOrders[i] = dbUser.checkAndPayPendingOrders(users[i].user_id, env.devMode ? 't_btc' : 'btc') // TODO Triggers errors
+				ftCheckOrders[i] = dbUser.checkAndPayPendingOrders(users[i].user_id, env.devMode ? 't_btc' : 'btc')
 			}
-			Promise.resolve(ftCheckOrders).then(function(results) {
-				console.log(results);
-				results.forEach(function(err, i, arr) {
-					if (err instanceof Error && err.code !== 'ER_DUP_ENTRY')
-						return reject(err);
-					arr[i] = null;
-				});
-				return resolve(results);
-			});
+
+			try {
+				var payedPerUser = await Promise.all(ftCheckOrders);
+				// TODO Implement we restart server and user waits for payments
+				// for (var i = 0; i < payedPerUser.length; i++) {
+				// 	Events.emit(`user-${ payedPerUser[i].userId }:order-confirmation`, payedPerUser[i].ordersDone);
+				// }
+				return resolve();
+			} catch (err) {
+				return reject(err);
+			}
 		})
 	});
 }
@@ -33,24 +38,13 @@ module.exports = {
 	 * Start up tasks
 	 */
 
-	start: function() {
-		return new Promise(async function(resolve, reject) {
-			try {
-				await bitcoinLib.services.hardCacheMonitoredAddresses();
-				await bitcoinLib.services.hardUpdateMonitoredAddresses();
-				var newDeposits = await bitcoinLib.states.hardUpdateTotalReceived();
-				await checkOrders();
-				return resolve();
-			} catch(err) {
-				return reject();
-			}
-
-			// var orders = await dbUser.checkAndPayPendingOrders(userId, transaction.currency);
-			// Events.emit(`user-${ userId }:order-confirmation`, orders);
-			//
-			// var pendingOrders = [];
-			// HARD CHECK WALLETS ? START + EVERY ?
-		});
+	start: async function() {
+		await bitcoinLib.services.hardCacheMonitoredAddresses();
+		await bitcoinLib.services.hardUpdateMonitoredAddresses();
+		await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
+		await bitcoinLib.states.hardUpdateConfirmedTransactions();
+		await checkOrders();
+		return Promise.resolve();
 	},
 
 	/**

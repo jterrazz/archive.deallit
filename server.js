@@ -44,7 +44,7 @@ if (env.devMode) {
 	app.use(cors());
 	app.use(delay(1000 * 0));
 	app.use(responseTime((req, res, time) => {
-		console.log(req.url.substring(0, 100) + ` (${ time } ms)`);
+		console.log('\x1b[34m' + req.url.substring(0, 100) + `\x1b[0m (${ time } ms)`);
 	}))
 }
 
@@ -56,20 +56,13 @@ Array.prototype.diff = function(arr2) {
 	return this.filter(x => !arr2.includes(x));
 };
 
+function reflect(promise){
+    return promise.then(function(v){ return {v:v, status: "resolved" }},
+                        function(e){ return {e: e, status: "rejected" }});
+}
+
 Promise.settle = function(promises) {
-	return Promise.all(promises.map(function(p) {
-		// make sure any values or foreign promises are wrapped in a promise
-		return Promise.resolve(p).catch(function(err) {
-			// make sure error is wrapped in Error object so we can reliably detect which promises rejected
-			if (err instanceof Error) {
-				return err;
-			} else {
-				var errObject = new Error();
-				errObject.rejectErr = err;
-				return errObject;
-			}
-		});
-	}));
+	return Promise.all(promises.map(reflect))
 }
 
 /**
@@ -77,12 +70,17 @@ Promise.settle = function(promises) {
  */
 
 const startServer = async () => {
-	await require('./libs/tasks').start();
+	try {
+		await require('./libs/tasks').start();
 
-	require('./routes')(app);
-	const server = http.listen(env.API_PORT, () => {
-		console.log(`\x1b[32mServer is running on port :\x1b[0m ${ server.address().port } 👍`);
-	})
+		require('./routes')(app);
+		const server = http.listen(env.API_PORT, () => {
+			console.log(`\x1b[36mServer:\x1b[0m listening on ${ server.address().port }`);
+		})
+	} catch (err) {
+		console.log(err);
+		return process.exit();
+	}
 };
 
 startServer();

@@ -5,7 +5,7 @@ const	Boom =			require('boom'),
 		validator = 	require('validator'),
 		speakeasy =		require('speakeasy'),
 		env =			require('../config/env'),
-		pool = 			require('../store'),
+		pool = 			require('../store').pool,
 		dbUser =		require('../store/user'),
 		asyncHandler =	require('./async');
 

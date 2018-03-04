@@ -1,5 +1,5 @@
 const	Boom =			require('boom'),
-		pool =			require('../store'),
+		pool =			require('../store').pool,
 		env =			require('../config/env'),
 		analyzer =		require('../libs/analyzer'),
 		snakeCaseKeys =	require('snakecase-keys');
@@ -276,30 +276,23 @@ const user = {
 	saveDeposit: (transaction, address) => {
 		return new Promise(function(resolve, reject) {
 			if (!["btc", "t_btc"].includes(transaction.currency) || !transaction.valueDeposit) // TODO Check all transaction requirments
-				return reject();
+				return reject(Error("bad-currency"));
 
 			var value = transaction.valueDeposit;
-			var query = "INSERT INTO user_transactions SET ?";
+			if (!address)
+				return reject(Error("no-address"));
 
-			pool.ftTransaction(function(db, next) {
-			    db.query(query, snakeCaseKeys(transaction), function(err) {
-			        if (err) return next(err);
-
-					query = `UPDATE user_wallets SET balance = balance + ?, total_received = total_received + ? WHERE public_address=?`;
-					db.query(query, [value, value, address], function(err) {
-				        if (err) return next(err);
-
-						query = `UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`;
-						db.query(query, [value, transaction.userId], function(err) {
-							return next(err);
-						});
-					});
-			    });
-			}, function(err) {
-				if (err)
-					return reject(err);
-				resolve();
-			});
+			pool.ftTransaction(function(conn) {
+				return [
+					conn.query("INSERT INTO user_transactions SET ?", snakeCaseKeys(transaction)),
+					conn.query("UPDATE user_wallets SET balance = balance + ?, total_received = total_received + ? WHERE public_address=?", [value, value, address]),
+					conn.query(`UPDATE users SET amount_${transaction.currency} = amount_${transaction.currency} + ? WHERE user_id=?`, [value, transaction.userId])
+				]
+			}).catch(err => {
+				return reject(err);
+			}).then(() => {
+				return resolve();
+			})
 		});
 	},
 
@@ -311,7 +304,7 @@ const user = {
 				if (err)
 					return reject(err);
 				else if (wallets.length !== 1)
-					return reject(Boom.notAcceptable("No user found"));
+					return resolve(null); // TODO Return error modified
 
 				var wallet = wallets[0]; // TODO Add Price XXXX Is defined in select orders
 				var query = `SELECT o.*, u.user_id AS seller_id FROM orders o INNER JOIN products p ON p.product_id=o.product_id INNER JOIN users u ON u.user_id = p.creator_id WHERE o.prefered_payment='crypto' AND o.payed=0 AND o.date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) AND o.user_id=?`;
@@ -334,7 +327,7 @@ const user = {
 					this.payOrders(currency, ordersToPay, 0, [], function(err, ordersDone) {
 						if (err)
 							return reject(err);
-						return resolve(ordersDone);
+						return resolve({ userId, ordersDone });
 					})
 				})
 			})
@@ -360,35 +353,21 @@ const user = {
 				currency: currency,
 				orderId: order.order_id
 			}
-			pool.ftTransaction((db, next) => {
-				db.query(query, snakeCaseKeys(payment), function(err) {
-					if (err) return next(err);
 
-					db.query(query, snakeCaseKeys(income), function(err) {
-						if (err) return next(err);
-
-						query = `UPDATE users SET amount_${ currency } = amount_${ currency } - ? WHERE user_id=?`
-						db.query(query, [ payment.valueLocalSent, order.user_id ], function(err) {
-							if (err) return next(err);
-
-							query = `UPDATE users SET amount_${ currency } = amount_${ currency } + ? WHERE user_id=?`
-							db.query(query, [ payment.valueLocalSent, order.seller_id ], function(err) {
-								if (err) return next(err);
-
-								query = "UPDATE orders SET payed=1 WHERE order_id = ?"
-								db.query(query, [ order.order_id ], function(err) {
-									return next(err);
-								});
-							});
-						});
-					});
-				});
-			}, (err) => {
-				if (err)
-					return callback(err);
+			pool.ftTransaction(function(conn) {
+				return [
+					conn.query(query, snakeCaseKeys(payment)),
+					conn.query(query, snakeCaseKeys(income)),
+					conn.query(`UPDATE users SET amount_${ currency } = amount_${ currency } - ? WHERE user_id=?`, [ payment.valueLocalSent, order.user_id ]),
+					conn.query(`UPDATE users SET amount_${ currency } = amount_${ currency } + ? WHERE user_id=?`, [ payment.valueLocalSent, order.seller_id ]),
+					conn.query("UPDATE orders SET payed=1 WHERE order_id = ?", [ order.order_id ]),
+				]
+			}).catch(err => {
+				return callback(err);
+			}).then(() => {
 				ordersDone.push(orders[i].order_id);
 				this.payOrders(currency, orders, i + 1, ordersDone, callback);
-			});
+			})
 		}
 	}
 }

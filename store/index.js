@@ -1,7 +1,9 @@
-let		configMysql =	require('../config/mysql.json');
+let configMysql = require('../config/mysql.json');
 
-const	mysql =			require('mysql'),
-		pool =			mysql.createPool(configMysql);
+const mysql = require('mysql2');
+const mysqlPromise = require('mysql2/promise');
+const pool = mysql.createPool(configMysql);
+const poolPromise = mysqlPromise.createPool(configMysql);
 
 testConnection();
 
@@ -13,47 +15,37 @@ function testConnection() {
 		} else if (err) {
 			console.log(err);
 		} else {
-			console.log("Connected to Mysql");
+			console.log("\x1b[36mMySQL:\x1b[0m connected");
 		}
 	});
 };
-
-// TODO UNDERSTAND THIS
 
 /**
  * Transaction wrapper
  */
 
-pool.ftTransaction = function(body, callback) {
-    pool.getConnection(function(err, conn) {
-        if (err) return callback(err);
-
-        conn.beginTransaction(function(err) {
-            if (err) return done(err);
-
-            body(conn, function(err) {
-                // Commit or rollback transaction, then proxy callback
-                let args = arguments;
-
-                if (err) {
-                    if (err == 'rollback') {
-                        args[0] = err = null;
-                    }
-                    conn.rollback(function() { done.apply(this, args) });
-                } else {
-                    conn.commit(function(err) {
-                        args[0] = err;
-                        done.apply(this, args)
-                    })
-                }
-            });
-
-            function done() {
-                conn.release();
-                callback.apply(this, arguments);
-            }
-        });
-    })
+pool.ftTransaction = function(body) {
+	return new Promise((resolve, reject) => {
+		poolPromise.getConnection()
+			.then(async connection => {
+				try {
+					await connection.query('START TRANSACTION');
+					var todo = body(connection);
+					await Promise.all(todo);
+					await connection.query('COMMIT');
+					return resolve();
+				} catch (err) {
+					connection.query('ROLLBACK');
+					return reject(err);
+				}
+			})
+			.catch(err => {
+				return reject(err);
+			})
+	});
 }
 
-module.exports = pool;
+module.exports = {
+	pool,
+	poolPromise
+};

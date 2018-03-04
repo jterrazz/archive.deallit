@@ -1,6 +1,6 @@
 const	Boom =			require('Boom'),
 		validator =		require('validator'),
-		pool =			require('../store');
+		pool =			require('../store').pool;
 
 var categories = null;
 
