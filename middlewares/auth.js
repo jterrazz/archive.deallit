@@ -5,8 +5,8 @@ const	Boom =			require('boom'),
 		validator = 	require('validator'),
 		speakeasy =		require('speakeasy'),
 		env =			require('../config/env'),
-		pool = 			require('../store').pool,
-		dbUser =		require('../store/user'),
+		pool = 			require('../models').pool,
+		dbUser =		require('../models/user'),
 		asyncHandler =	require('./async');
 
 const	cert =			fs.readFileSync('config/jwt.key');
@@ -113,7 +113,7 @@ module.exports = {
 	}),
 
 	requireUser: asyncHandler(async (req, res, next) => {
-		if (!req.user && !req.user.userId)
+		if (!req.user || !req.user.userId)
 			return next(Boom.forbidden("Must be logged to access this"));
 
 		return next();

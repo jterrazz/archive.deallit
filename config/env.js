@@ -4,10 +4,10 @@
 	}
 })
 
-const amazonBaseURL = "https://s3.eu-west-3.amazonaws.com/the-crypto-market/";
+const amazonBaseURL = "http://the-crypto-market.s3-website.eu-west-3.amazonaws.com/";
 
 const env = {
-	devMode: process.env.NODE_ENV == "development",
+	devMode: ["development", "test"].includes(process.env.NODE_ENV),
 	CURRENCY_RATES_UPDATE_DELAY: 60 * 60, // seconds
 	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
 	TWO_FA_REGISTER_TIME: 60 * 60 * 2,
@@ -26,6 +26,14 @@ const env = {
 	/* Bitcoin */
 	BITCOIN_NODE_USER: "themaster",
 	BITCOIN_NODE_PASSWORD: "Corsica20",
+
+	BITCOIN_CONFIRMATIONS: 2,
+	BITCOIN_MAX_CONFIRMATIONS: 999999999,
+	SATOSHI_UNITS: 100000000,
+
+	PREFIX_BITCOIN_UNCONFIRMED_TRANSACTION: "//bitcoin-transaction-unconfirmed:",
+	PREFIX_BITCOIN_MONITORED: "//monitoring-bitcoin-address:",
+	BITCOIN_MAX_CONFIRMATION_TIME: 60 * 60 * 24,
 }
 
 const devEnv = {

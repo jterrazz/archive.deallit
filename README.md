@@ -1,6 +1,6 @@
 # mymarket-server
 
-> A marketplace with decentralized applications
+> A marketplace focused on decentralization
 
 ## Requirements
 - MySQL
@@ -11,18 +11,23 @@
 ## Build Setup
 
 ``` bash
-# install dependencies
+# Install dependencies
 npm install
+npm run install # global dependencies
 
-# command for development
-npm run dev
-
-# command for production
+# Commands for production
 npm run prod
+npm run pm2-prod # cluster-mode
 
-# cluster mode for development
-npm run pm2-dev
+# Commands for development
+npm run dev
+npm run pm2-dev # cluster-mode
+npm run export # exports categories JSON
 
-# cluster mode for production
-npm run pm2-prod
+# Commands for testing
+npm run test
+
+# Usefull commands
+npm-check # update dependencies
+
 ```

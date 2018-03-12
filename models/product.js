@@ -1,10 +1,33 @@
 const	Boom =			require('boom'),
-		pool =			require('../store').pool,
+		pool =			require('./index').pool,
+		poolPromise =			require('./index').poolPromise,
 		analyzer =		require('../libs/analyzer'),
 		validator =		require('validator'),
 		snakeCaseKeys = require('snakecase-keys');
 
 const product = {
+	// TODO Better algorythm
+	getWall: async (userId) => {
+		var wall = [];
+		var [data] = await poolPromise.query("SELECT p.*, u.* FROM products p LEFT JOIN users u ON u.user_id=p.creator_id LEFT JOIN follows f ON p.creator_id=f.followed_id WHERE f.user_id = ?", [userId]);
+		for (var i = 0; i < data.length; i++) {
+			var index = -1;
+			wall.forEach((d, j) => {
+				if (d[0].user_id == data[i].user_id)
+					index = j
+			})
+			if (index == -1)
+				wall.push([data[i]]);
+			else
+				wall[index].push(data[i]);
+		}
+		wall.forEach(d => {
+			analyzer.decodeImagesURL(d);
+			analyzer.decodeTags(d);
+		})
+		return wall;
+	},
+
 	getMany: (filters) => {
 		return new Promise((resolve, reject) => {
 			var whereInit = 0;

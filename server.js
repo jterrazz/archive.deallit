@@ -1,6 +1,6 @@
 const	env =			require('./config/env'),
 		cors =			require('cors'),
-		pool =			require('./store'),
+		pool =			require('./models').pool,
 		delay =			require('express-delay'),
 		jsonfile =		require('jsonfile'),
 		bodyParser =	require('body-parser'),
@@ -14,6 +14,7 @@ const	express =		require('express'),
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
+require('./libs/utils');
 
 /**
  * EXPORT MODE
@@ -50,23 +51,6 @@ if (env.devMode) {
 }
 
 /**
- * CHANGE FILE
- */
-
-Array.prototype.diff = function(arr2) {
-	return this.filter(x => !arr2.includes(x));
-};
-
-function reflect(promise){
-    return promise.then(function(v){ return {v:v, status: "resolved" }},
-                        function(e){ return {e: e, status: "rejected" }});
-}
-
-Promise.settle = function(promises) {
-	return Promise.all(promises.map(reflect))
-}
-
-/**
  * SERVER
  */
 
@@ -76,7 +60,9 @@ const startServer = async () => {
 
 		require('./routes')(app);
 		const server = http.listen(env.API_PORT, () => {
-			logger.info(`Server listening`, {port: server.address().port});
+			logger.info(`API listening`, { port: server.address().port });
+		}).on('error', err => {
+			throw err;
 		})
 	} catch (err) {
 		logger.error(err);
@@ -86,10 +72,20 @@ const startServer = async () => {
 
 startServer();
 
-// TODO:220 all currency converted server side --> redis store currencies
-// TODO:140 Check all routes are number or escaped
-// TODO:180 Not found page
+// TODO When selecting user dont select balances and password, ...
+// TODO Do pagination for many ... / conversations + redo conversations for products and not user
 // TODO:130 Cancel order
 // TODO:90 Do store list in home and categories
-// REfactoring routes avec analyse in routes et uniquement db in db
-// Optimise Sql request by opening connection for 2 requests
+//
+// TODO WHEN buying => log in
+
+/**
+ * CODE IMPROVMENTS
+ * - Query 2 times user in start ? (/me and /status)
+ * - Promisify all sql requests
+ * - Tests !!!
+ *
+ * UI IMPROVMENTS
+ * - Better 404 page
+ * - 404 for failed ajax requests
+ */

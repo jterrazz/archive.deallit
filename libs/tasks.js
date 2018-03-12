@@ -1,10 +1,10 @@
-let env = require('../config/env');
+let		env =			require('../config/env');
 
-const findRemove = require('find-remove'),
-	pool = require('../store').poolPromise,
-	dbUser = require('../store/user'),
-	Events = require('./events'),
-	bitcoinLib = require('./currencies/bitcoin');
+const	findRemove = 	require('find-remove'),
+		pool =			require('../models').poolPromise,
+		dbUser =		require('../models/user'),
+		Events =		require('./events'),
+		bitcoinLib =	require('./currencies/bitcoin');
 
 const checkOrders = async () => {
 	var query = `SELECT user_id FROM orders WHERE payed=0 AND date > (NOW() - INTERVAL ${ env.ORDER_VALIDITY } MINUTE) GROUP BY user_id`;
@@ -14,14 +14,8 @@ const checkOrders = async () => {
 		ftCheckOrders[i] = dbUser.checkAndPayPendingOrders(users[i].user_id, env.devMode ? 't_btc' : 'btc')
 	}
 	var payedPerUser = await Promise.all(ftCheckOrders);
-
-	// TODO Implement we restart server and user waits for payments
-	// for (var i = 0; i < payedPerUser.length; i++) {
-	// 	Events.emit(`user-${ payedPerUser[i].userId }:order-confirmation`, payedPerUser[i].ordersDone);
-	// }
 }
 
-// When block found, check to confirm pending txs and also remove from redis the unconfirmed
 module.exports = {
 
 	/**
@@ -29,12 +23,23 @@ module.exports = {
 	 */
 
 	start: async function() {
+		// await bitcoinLib.utils.createTransaction("n1UFjwYKikZ1ABab9jKnYjy9ETXUYodqQM", "mtKirnwxrdaXfJKqMhVFpE2hyvvz8ihZ4A", 5);
 		await bitcoinLib.services.hardCacheMonitoredAddresses();
 		await bitcoinLib.services.hardUpdateMonitoredAddresses();
 		await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
 		await bitcoinLib.states.hardUpdateConfirmedTransactions();
 		await checkOrders();
+		console.log("Starting tasks done");
+
+		this.recurring();
 		return Promise.resolve();
+		// if (err.message == "Address not found in wallet") { // TODO Test error triggered in tests
+		// 	console.log("add address");
+		// } else if (err.message == "Wallet is currently rescanning. Abort existing rescan or wait.") {
+		// 	console.log("Wallet is scanning"); // TODO Do per address
+		// 	setTimeout(async () => {
+		// 		await test();
+		// 	}, 1000 * 1);
 	},
 
 	/**

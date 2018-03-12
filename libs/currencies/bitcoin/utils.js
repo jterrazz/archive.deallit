@@ -1,6 +1,8 @@
 let env = require('../../../config/env');
 
 const	bitcoin = require('bitcoinjs-lib'),
+		bitcoinServices = require('./services'),
+		bitcoinClient = require('./client'),
 		network = env.devMode ? bitcoin.networks.testnet : bitcoin.networks.bitcoin;
 
 module.exports = {
@@ -24,7 +26,7 @@ module.exports = {
 	},
 
 	getSegwitAddress: function(wif) {
-		var keyPair = bitcoin.ECPair.fromWIF(wif, bitcoin.networks.testnet);
+		var keyPair = bitcoin.ECPair.fromWIF(wif, network);
 		var pubKey = keyPair.getPublicKeyBuffer();
 		var scriptPubKey = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(pubKey));
 		var segwitPublicAddress = bitcoin.address.fromOutputScript(scriptPubKey);
@@ -32,11 +34,34 @@ module.exports = {
 	},
 
 	/**
-	 * Transaction methods
+	 * New transaction methods
+	 */
+
+	 async createTransaction(from, to, amount) {
+		 await bitcoinServices.listenToAddress(from);
+		 var keyPair = bitcoin.ECPair.fromWIF("cNzvYYLoAGoZ4EVQnhJikHC9CpacDWSGDvMfN61LvtK6fvNvsYnM", network);
+		 var toSpend = await bitcoinClient.listUnspent(env.BITCOIN_CONFIRMATIONS, env.BITCOIN_MAX_CONFIRMATIONS, [from]);
+		 var txb = new bitcoin.TransactionBuilder(network);
+		 var amount = 0;
+		 toSpend.forEach((unspent, i) => {
+			 txb.addInput(unspent.txid, unspent.vout);
+			 amount += unspent.amount * 100000000;
+		 });
+		 amount -= 100000000 * 0.1
+		 txb.addOutput("mub3MyBe9aBF3bEZcpDzjViDokT2JqX5Zy", amount);
+		 toSpend.forEach((unspent, i) => {
+			 txb.sign(i, keyPair)
+		 });
+		 var tx = txb.build().toHex();
+		 await bitcoinClient.sendRawTransaction(tx);
+	 },
+
+	/**
+	 * Decode methods
 	 */
 
 	decodeRawTransaction: function(rawtx) {
-		rawtx = bitcoin.Transaction.fromHex(rawtx.toString('hex'));
+		rawtx = bitcoin.Transaction.fromHex(rawtx);
 		var tx = {
 			id: rawtx.getId(),
 			outputs: this.decodeTransactionOutput(rawtx, network),

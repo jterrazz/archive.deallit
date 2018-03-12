@@ -41,7 +41,7 @@ module.exports = {
 				if (rates) {
 					return resolve(JSON.parse(rates)); // TODO If err reset redis key
 				} else if (isUpdating) {
-					Events.once('ticker-updated', (rates) => {
+					Events.once('ticker-updated', (rates) => { // TODO ?? Memory leak ?
 						return resolve(rates);
 					})
 				} else {

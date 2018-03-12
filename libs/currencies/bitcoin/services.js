@@ -1,25 +1,24 @@
-const	PREFIX_BITCOIN_MONITORED = "//monitoring-bitcoin-address:",
-		bitcoinClient = require('./client'),
-		pool = require('../../../store').poolPromise,
+const	bitcoinClient = require('./client'),
+		pool = require('../../../models').poolPromise,
 		env = require('../../../config/env'),
 		redisClient = require('../../redis');
 
 module.exports = {
 	listenToAddress: async function(address) {
-		var data = await redisClient.getAsync(PREFIX_BITCOIN_MONITORED + address);
+		var data = await redisClient.getAsync(env.PREFIX_BITCOIN_MONITORED + address);
 
 		if (data)
 			return;
 		await bitcoinClient.importAddress(address);
-		await redisClient.setAsync(PREFIX_BITCOIN_MONITORED + address, true);
+		await redisClient.setAsync(env.PREFIX_BITCOIN_MONITORED + address, true);
 	},
 
 	hardCacheMonitoredAddresses: async function() { // TODO Also check if some in cache and not in node
 		var currentlyMonitored = await bitcoinClient.getAddressesByAccount("");
 		for (var i = 0; i < currentlyMonitored.length; i++) {
-			currentlyMonitored[i] = PREFIX_BITCOIN_MONITORED + currentlyMonitored[i];
+			currentlyMonitored[i] = env.PREFIX_BITCOIN_MONITORED + currentlyMonitored[i];
 		}
-		var dbMonitored = await redisClient.keysAsync(`${ PREFIX_BITCOIN_MONITORED }*`);
+		var dbMonitored = await redisClient.keysAsync(`${ env.PREFIX_BITCOIN_MONITORED }*`);
 		var diff = currentlyMonitored.diff(dbMonitored);
 
 		// Send to redis

@@ -4,9 +4,9 @@ const	Boom =			require('boom'),
 		auth =			require('../middlewares/auth'),
 		upload =		require('../middlewares/upload'),
 		asyncHandler =	require('../middlewares/async'),
-		dbUser =		require('../store/user'),
-		dbMarket =		require('../store/market'),
-		dbProduct =		require('../store/product'),
+		dbUser =		require('../models/user'),
+		dbMarket =		require('../models/market'),
+		dbProduct =		require('../models/product'),
 		tasks =			require('../libs/tasks'),
 		checker =		require('../libs/checker'),
 		bitcoinLib =		require('../libs/currencies/bitcoin'),
@@ -14,8 +14,12 @@ const	Boom =			require('boom'),
 		storageServer = require('../libs/storage'),
 		speakeasy =		require('speakeasy');
 
-// TODO:240 require user and check user equal change
-// TODO Parse all inputs
+/**
+ * ALWAYS CHECK THE FOLLOWING RULES
+ * 1. Require user if necessary
+ * 2. Getting user data == userId logged ?
+ * 3. Parse all inputs (TODO !!!)
+ */
 
 router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
 	var currency = req.params.currency;
@@ -27,9 +31,9 @@ router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, 
 	else if (currency == 'ETH')
 		var type = env.devMode ? 't_eth' : 'eth';
 
-	var data = await dbUser.getWalletForUser(req.user.userId, type, false);
+	var data = await dbUser.getPublicAddress(req.user.userId, type, false);
 	if (data)
-		return res.json(data);
+		return res.json({ public_address: data });
 
 	switch (currency) {
 		case 'BTC':
@@ -138,7 +142,7 @@ router.route('/me')
 		// if (safeUser.mail)
 		// check mail is included
 		if (safeUser.userImage)
-			var images = await storageServer.sendFiles([safeUser.userImage]);
+			var images = await storageServer.sendFiles([safeUser.userImage]); // TODO Delete old image
 		// TODO Add images effectively sent
 		// If Sql error remove Image from DB
 		await dbUser.patch(req.user.userId, safeUser);
@@ -152,7 +156,6 @@ router.route('/me')
 		res.sendStatus(200);
 	}))
 
-// TODO:190 Query 2 times user in start ? (/me and /status)
 router.get('/status', auth.requireUser, asyncHandler(async (req, res) => {
 	var userStatus = {};
 	var user = await dbUser.get(req.user.userId);
@@ -163,7 +166,6 @@ router.get('/status', auth.requireUser, asyncHandler(async (req, res) => {
 	res.json(userStatus);
 }))
 
-// TODO Do pagination for many conversations + redo conversations for products and not user
 router.get('/conversations', auth.requireUser, asyncHandler(async (req, res) => {
 	var conversations = await dbUser.getConversations(req.user.userId);
 
@@ -217,12 +219,11 @@ router.route('/order/:orderId')
 	}))
 
 	.delete(auth.requireUser, asyncHandler(async (req, res) => {
-		await dbUser.cancelOrder(req.user.userId, req.params.orderId); // Verify it is possible for this user and order is cancellable
+		await dbUser.cancelOrder(req.user.userId, req.params.orderId); // TODO Verify it is possible for this user and order is cancellable
 
 		res.sendStatus(200);
 	}))
 
-// TODO Messages to ID or to Product ? Or mix of both
 router.route('/messages/:contactId')
 	.get(auth.requireUser, asyncHandler(async (req, res) => {
 		var messages = await dbUser.getMessages(req.user.userId, req.params.contactId);
@@ -259,6 +260,24 @@ router.get('/products', asyncHandler(async (req, res, next) => {
 	res.json(products);
 }))
 
+router.get('/followed-wall', auth.requireUser, asyncHandler(async (req, res, next) => {
+	var data = await dbProduct.getWall(req.user.userId);
+
+	res.json(data);
+}))
+
+router.route('/follows/:storeId')
+	.post(auth.requireUser, asyncHandler(async (req, res) => {
+		var followed = await dbUser.followStore(req.user.userId, req.params.storeId);
+
+		res.json({ followed });
+	}))
+	.delete(auth.requireUser, asyncHandler(async (req, res) => {
+		var followed = await dbUser.unfollowStore(req.user.userId, req.params.storeId);
+
+		res.json({ followed });
+	}))
+
 router.route('/product')
 // TODO Payment and adresses methods (maybe general in store)
 	.post(auth.requireUser, asyncHandler(async (req, res, next) => {
@@ -278,7 +297,7 @@ router.route('/product')
 		});
 	}))
 
-	// TODO:20 Change route and user productId in url
+	// TODO:20 Change route and user productId in url ??? Seller shouldnt be able to modify too many things ?
 	.patch(auth.requireUser, asyncHandler(async (req, res, next) => {
 		var safeProduct = checker.rawProduct(req.body);
 		if (!safeProduct)

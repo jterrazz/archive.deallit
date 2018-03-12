@@ -1,6 +1,7 @@
 const	server =		require('http').createServer(),
 		io =			require('socket.io')(server),
 		env =			require('../config/env'),
+		logger =		require('../libs/logger'),
 		Events =		require('../libs/events');
 
 io.on('connection', function(client) {
@@ -23,4 +24,8 @@ io.on('connection', function(client) {
 	})
 });
 
-server.listen(env.SOCKET_PORT);
+server.listen(env.SOCKET_PORT, () => {
+	logger.info("SOCKETS listening", { port: env.SOCKET_PORT })
+}).on('error', (err) => {
+	logger.error(err);
+})

@@ -1,7 +1,9 @@
 const	Boom =			require('boom'),
-		pool =			require('../store').pool,
+		pool =			require('./index').pool,
+		poolPromise =			require('./index').poolPromise,
 		env =			require('../config/env'),
 		analyzer =		require('../libs/analyzer'),
+		Joi =			require('joi'),
 		snakeCaseKeys =	require('snakecase-keys');
 
 const user = {
@@ -41,6 +43,20 @@ const user = {
 
 	delete: (userId) => {
 
+	},
+
+	followStore: async (userId, followedId) => {
+		try {
+			await poolPromise.query("INSERT INTO follows SET ?", snakeCaseKeys({ userId, followedId }));
+		} catch (err) {
+			if (err.code == 'ER_DUP_ENTRY')
+				return;
+			throw err;
+		}
+	},
+
+	unfollowStore: async (userId, followedId) => {
+		await poolPromise.query("DELETE FROM follows WHERE user_id=? AND followed_id=?", [userId, followedId]);
 	},
 
 	getConversations: function(userId) {
@@ -223,61 +239,74 @@ const user = {
 		});
 	},
 
-	saveWallet: (type, userId, publicAddress, wif, isSegwit) => {
-		return new Promise(function(resolve, reject) {
-			var query = "INSERT INTO user_wallets SET ?";
-			var dataSql = {
-				type,
-				user_id: userId,
-				public_address: publicAddress,
-				wif,
-				is_segwit: isSegwit
-			};
+	/**
+	 * !!! Wallets methods !!!
+	 * -> Extra input verifications
+	 */
 
-			pool.query(query, dataSql, (err, data) => {
-				if (err)
-					return reject(err);
-				else if (!data.affectedRows)
-					return (Boom.notAcceptable());
-				resolve();
-			})
-		});
+	saveWallet: async (type, userId, publicAddress, wif, isSegwit) => {
+		const schema1 = Joi.string().required();
+		const schema2 = Joi.number().required();
+		const schema3 = Joi.boolean().required();
+		await schema1.validate(type);
+		await schema2.validate(userId);
+		await schema1.validate(publicAddress);
+		await schema1.validate(wif);
+		await schema3.validate(isSegwit);
+
+		var query = "INSERT INTO user_wallets SET ?";
+		var dataSql = {
+			type,
+			user_id: userId,
+			public_address: publicAddress,
+			wif,
+			is_segwit: isSegwit
+		};
+
+		var [data] = await poolPromise.query(query, dataSql);
+		if (!data.affectedRows)
+			throw Boom.notAcceptable("Wallet not saved");
 	},
 
-	getWalletForUser: (userId, currency, isSegwit) => {
-		return new Promise(function(resolve, reject) {
-			var query = "SELECT w.public_address FROM user_wallets w " +
-				"WHERE w.user_id=? AND w.type=? AND w.is_segwit=? ORDER BY w.wallet_id DESC LIMIT 1";
+	getPublicAddress: async (userId, currency, isSegwit) => {
+		const schema1 = Joi.number().required();
+		const schema2 = Joi.string().required();
+		const schema3 = Joi.boolean().required();
+		await schema1.validate(userId);
+		await schema2.validate(currency);
+		await schema3.validate(isSegwit);
 
-			pool.query(query, [userId, currency, isSegwit], (err, data) => {
-				if (err)
-					return reject(err);
-				else if (data.length == 0)
-					return resolve(null);
-				resolve(data[0]);
-			})
-		});
+		var query = "SELECT w.public_address FROM user_wallets w " +
+			"WHERE w.user_id=? AND w.type=? AND w.is_segwit=? ORDER BY w.wallet_id DESC LIMIT 1";
+		var [data] = await poolPromise.query(query, [userId, currency, isSegwit]);
+		if (data.length == 0)
+			return null;
+		return data[0].public_address;
 	},
 
-	getUserForWalletAdresses: (adresses) => {
-		return new Promise(function(resolve, reject) {
-			var query = "SELECT user_id FROM user_wallets WHERE public_address IN (?)";
+	getUserForWalletAdresses: async (addresses) => {
+		const schema = Joi.array().items(Joi.string()).single().min(1).required();
+		await schema.validate(addresses);
 
-			pool.query(query, [adresses], (err, data) => {
-				if (err)
-					return reject(err);
-				else if (data.length !== 1)
-					return reject(Boom.notAcceptable);
-				resolve(data[0].user_id);
-			})
-		});
+		var query = "SELECT user_id FROM user_wallets WHERE public_address IN (?)";
+		var [data] = await poolPromise.query(query, [addresses]);
+		if (data.length !== 1)
+			throw Error("NO_USER");
+		return data[0].user_id;
 	},
 
-	saveDeposit: (transaction, address) => {
-		return new Promise(function(resolve, reject) {
-			if (!["btc", "t_btc"].includes(transaction.currency) || !transaction.valueDeposit) // TODO Check all transaction requirments
-				return reject(Error("bad-currency"));
+	saveDeposit: async (transaction, address) => {
+		const schema1 = Joi.object({
+			valueDeposit: Joi.number().required(),
+			userId: Joi.number().required(),
+			currency: Joi.string().required(),
+			hash: Joi.string().required()
+		})
+		const schema2 = Joi.string().required();
+		await schema1.validate(transaction);
+		await schema2.validate(address);
 
+		return new Promise(function(resolve, reject) {
 			var value = transaction.valueDeposit;
 			if (!address)
 				return reject(Error("no-address"));
@@ -298,7 +327,12 @@ const user = {
 
 	// TODO BE FUCKING SURE CANT PAY BECAUSE OF STUPID DELAY OF SELECT
 	// TODO:120 Security check currency is always set in our code
-	checkAndPayPendingOrders: function(userId, currency) {
+	checkAndPayPendingOrders: async function(userId, currency) {
+		const schema1 = Joi.number().required();
+		const schema2 = Joi.string().required();
+		await schema1.validate(userId);
+		await schema2.validate(currency);
+
 		return new Promise((resolve, reject) => {
 			pool.query(`SELECT amount_${ currency } AS value FROM users WHERE user_id=?`, userId, (err, wallets) => {
 				if (err)
@@ -335,7 +369,10 @@ const user = {
 	},
 
 	payOrders: function(currency, orders, i, ordersDone, callback) {
-		if (i >= orders.length) {
+		const schema1 = Joi.string().required();
+		const schema2 = Joi.array(Joi.number()).required();
+
+		if (i >= orders.length || !schema1.validate(currency) || !schema2.validate(orders)) {
 			return callback(null, ordersDone);
 		} else {
 			var order = orders[i];
@@ -372,5 +409,4 @@ const user = {
 	}
 }
 
-// TODO DO WITH PROMISES
 module.exports = user;
