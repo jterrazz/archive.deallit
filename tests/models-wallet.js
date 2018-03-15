@@ -3,32 +3,35 @@ const Joi = require('joi');
 const assert = require('assert');
 const dbUser = require('../models/user');
 
-describe('bitcoin', function() {
+describe('wallets', function() {
+	beforeEach(function() {
 
-	describe('wallet', function() {
+	})
 
-		it('should check arguments', async function() {
-			var todo = [
-				dbUser.saveWallet(null, 1, "test", "test", false),
-				dbUser.saveWallet('btc', null, "test", "test", false),
-				dbUser.saveWallet('btc', 1, null, "test", false),
-				dbUser.saveWallet('btc', 1, "test", null, false),
-				dbUser.saveWallet('btc', 1, "test", "test", null),
-			]
-			var res = await Promise.settle(todo);
-			var i = 0;
-			res.forEach(err => {
-				if (err.e)
-					i++;
-			})
-			if (i !== todo.length)
-				throw Error("Did not trigger error");
-		});
-
+	describe('#getPublicAddress', function() {
+		it('should check arguments')
 		it('should return null when not found', async function() {
 			var wallet = await dbUser.getPublicAddress(-1, 't_btc', false);
 			assert.equal(wallet, null);
 		});
+	})
+
+	describe('#saveWallet', function() {
+		var args = [
+			[null, 1, "test", "test", false],
+			['btc', null, "test", "test", false],
+			['btc', 1, null, "test", false],
+			['btc', 1, "test", null, false],
+			['btc', 1, "test", "test", null],
+		];
+
+		args.forEach(a => {
+			it(`should check arguments (${ a })`, function(done) {
+				dbUser.saveWallet.apply(null, a)
+					.then(() => { throw Error("return not null") })
+					.catch(() => { done() })
+			});
+		})
 
 		it('should create one and query it', async function() {
 			await dbUser.saveWallet('t_btc', 1, "test", "test", false);
@@ -36,7 +39,5 @@ describe('bitcoin', function() {
 			const schema = Joi.string().required();
 			await schema.validate(add);
 		});
-
 	})
-
 })
