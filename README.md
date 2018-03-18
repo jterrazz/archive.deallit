@@ -1,12 +1,19 @@
-# mymarket-server
+# deallit-server
 
 > A marketplace focused on decentralization
 
 ## Requirements
-- MySQL
+- MySQL - on AWS Aurora
 - Redis
 - ZeroMQ
 - Bitcoind (bitcoin-core)
+- Nginx
+
+Services
+- DNS on namecheap / cloudflare
+- SSL on namecheap
+- AWS S3, EC2, Lambda, RDS
+- Mail on sendgrid
 
 ## Build Setup
 

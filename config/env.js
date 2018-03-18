@@ -4,10 +4,14 @@
 	}
 })
 
-const amazonBaseURL = "http://the-crypto-market.s3-website.eu-west-3.amazonaws.com/";
+const amazonBaseURL = "https://the-crypto-market.s3-website.eu-west-3.amazonaws.com/";
 
 const env = {
 	devMode: ["development", "test"].includes(process.env.NODE_ENV),
+	redisOn: false,
+	webhookOn: false,
+	bitcoinTasksOn: false,
+
 	CURRENCY_RATES_UPDATE_DELAY: 60 * 60, // seconds
 	TEMP_FILES_MAX_AGE: 60 * 60, // seconds
 	TWO_FA_REGISTER_TIME: 60 * 60 * 2,

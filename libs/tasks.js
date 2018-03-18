@@ -23,23 +23,24 @@ module.exports = {
 	 */
 
 	start: async function() {
-		// await bitcoinLib.utils.createTransaction("n1UFjwYKikZ1ABab9jKnYjy9ETXUYodqQM", "mtKirnwxrdaXfJKqMhVFpE2hyvvz8ihZ4A", 5);
-		await bitcoinLib.services.hardCacheMonitoredAddresses();
-		await bitcoinLib.services.hardUpdateMonitoredAddresses();
-		await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
-		await bitcoinLib.states.hardUpdateConfirmedTransactions();
-		await checkOrders();
-		console.log("Starting tasks done");
+		if (env.bitcoinTasksOn) {
+			// await bitcoinLib.utils.createTransaction("n1UFjwYKikZ1ABab9jKnYjy9ETXUYodqQM", "mtKirnwxrdaXfJKqMhVFpE2hyvvz8ihZ4A", 5);
+			await bitcoinLib.services.hardCacheMonitoredAddresses();
+			await bitcoinLib.services.hardUpdateMonitoredAddresses();
+			await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
+			await bitcoinLib.states.hardUpdateConfirmedTransactions();
 
+			// if (err.message == "Address not found in wallet") { // TODO Test error triggered in tests
+			// 	console.log("add address");
+			// } else if (err.message == "Wallet is currently rescanning. Abort existing rescan or wait.") {
+			// 	console.log("Wallet is scanning"); // TODO Do per address
+			// 	setTimeout(async () => {
+			// 		await test();
+			// 	}, 1000 * 1);
+			await checkOrders();
+		}
+		console.log("Starting tasks done");
 		this.recurring();
-		return Promise.resolve();
-		// if (err.message == "Address not found in wallet") { // TODO Test error triggered in tests
-		// 	console.log("add address");
-		// } else if (err.message == "Wallet is currently rescanning. Abort existing rescan or wait.") {
-		// 	console.log("Wallet is scanning"); // TODO Do per address
-		// 	setTimeout(async () => {
-		// 		await test();
-		// 	}, 1000 * 1);
 	},
 
 	/**
