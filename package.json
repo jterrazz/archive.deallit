@@ -4,7 +4,7 @@
 	"description": "A work on decentralized marketplaces and online commerce",
 	"main": "server.js",
 	"scripts": {
-		"install": "npm install -g npm-check mocha",
+		"setup": "npm install -g npm-check mocha nodemon",
 		"export": "NODE_ENV=export node server.js",
 		"test": "NODE_ENV=test mocha tests/*.js --exit",
 		"dev": "NODE_ENV=development nodemon server.js",

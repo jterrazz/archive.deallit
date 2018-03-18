@@ -1,4 +1,4 @@
-const	Boom =			require('Boom'),
+const	Boom =			require('boom'),
 		validator =		require('validator'),
 		pool =			require('../models').poolPromise;
 
