@@ -4,11 +4,12 @@
 	}
 })
 
-const amazonBaseURL = "https://the-crypto-market.s3-website.eu-west-3.amazonaws.com/";
+let devMode = ["development", "test"].includes(process.env.NODE_ENV);
+const amazonBaseURL = devMode ? "https://d2tj4oo7tztmac.cloudfront.net/" : "";
 
 const env = {
-	devMode: ["development", "test"].includes(process.env.NODE_ENV),
-	redisOn: false,
+	devMode,
+	localMode: true,
 	webhookOn: false,
 	bitcoinTasksOn: false,
 
@@ -23,9 +24,8 @@ const env = {
 	SALT_ROUNDS: 10,
 
 	/* AWS */
-	AWS_BUCKET_NAME: "the-crypto-market",
-	staticServerUrl: amazonBaseURL,
-	imagesFolder: amazonBaseURL + 'public/images/',
+	staticServerUrl: amazonBaseURL + 'assets/',
+	imagesFolder: amazonBaseURL + 'images/',
 
 	/* Bitcoin */
 	BITCOIN_NODE_USER: "themaster",
@@ -43,11 +43,13 @@ const env = {
 const devEnv = {
 	API_PORT: 8081,
 	SOCKET_PORT: 4242,
+	AWS_BUCKET_NAME: "deallit-dev",
 }
 
 const prodEnv = {
 	API_PORT: 443,
 	SOCKET_PORT: 442,
+	AWS_BUCKET_NAME: "deallit-prod",
 }
 
 Object.assign(env, env.devMode ? devEnv : prodEnv);

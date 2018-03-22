@@ -54,19 +54,13 @@ if (env.devMode) {
  * SERVER
  */
 
+// if (req.headers['x-forwarded-proto'] !== 'https')
+// return res.redirect('https://' + req.headers.host + req.url);
+
 const runServer = async () => {
 	try {
 		await require('./libs/tasks').start();
 		require('./routes')(app);
-
-		/**
-		 * TEMP Serve files on cloudfront on a CDN
-		 */
-
-		app.use(express.static(__dirname + '/public'));
-		app.get('*', (req,res) => {
-			res.sendFile('index.html', { root: __dirname + '/public' });
-		});
 
 		const server = http.listen(env.API_PORT, () => {
 			logger.info(`API listening`, { port: server.address().port });
@@ -84,12 +78,11 @@ runServer();
 /**
  * TODO
  *
- * - Register mail + all system working
+ * - Register mail + all system working + checks + limit per ip login and register
  * - Sell form
  * - Modify form
  * - Service bitcoin qui marche inedenpant
  * - Focus sur creer son magasin
- * - Peut etre ethereum
  *
  */
 
@@ -105,6 +98,7 @@ runServer();
  * - Query 2 times user in start ? (/me and /status)
  * - Promisify all sql requests
  * - Tests !!!
+ * - Ethereum
  *
  * UI IMPROVMENTS
  * - Better 404 page

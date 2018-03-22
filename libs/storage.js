@@ -5,7 +5,7 @@ const	AWS =			require('aws-sdk'),
 
 AWS.config.loadFromPath('config/aws.json');
 
-const s3 = new AWS.S3({ region: 'eu-west-2' });
+const s3 = new AWS.S3({ region: 'eu-west-1' });
 
 const createMainBucket = () => {
 	return new Promise((resolve, reject) => {
@@ -31,7 +31,7 @@ const createItemObject = (file, fileName) => {
 	return new Promise((resolve, reject) => {
 		const params = {
 			Bucket: env.AWS_BUCKET_NAME,
-			Key: `public/images/${ fileName }`,
+			Key: `images/${ fileName }`,
 			ACL: 'public-read',
 			Body: file
 		};
@@ -70,7 +70,7 @@ module.exports = {
 			return Promise.resolve();
 
 		filesArray.forEach((filename) => {
-			if (filename) // TODO Check correspond to user upload and exist
+			if (filename) // TODO Check correspond to user upload and exist // if multiple servers check is server handling the /temp
 				ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
 		});
 

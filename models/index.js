@@ -1,4 +1,4 @@
-let configMysql = require('../config/mysql.json');
+let configMysql = require('../config/mysql');
 
 const logger = require('../libs/logger');
 const mysql = require('mysql2');
