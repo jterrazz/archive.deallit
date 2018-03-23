@@ -41,13 +41,13 @@ const env = {
 }
 
 const devEnv = {
-	API_PORT: 8081,
+	API_PORT: 80,
 	SOCKET_PORT: 4242,
 	AWS_BUCKET_NAME: "deallit-dev",
 }
 
 const prodEnv = {
-	API_PORT: 443,
+	API_PORT: 80,
 	SOCKET_PORT: 442,
 	AWS_BUCKET_NAME: "deallit-prod",
 }

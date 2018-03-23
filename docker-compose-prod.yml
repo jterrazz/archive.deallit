@@ -1,14 +1,22 @@
 version: '3'
 services:
     api:
-        build: maestru2a/deallit
+        image: maestru2a/deallit_api
         ports:
             - "80:80"
             - "4242:4242"
         depends_on:
-            - db
             - redis
     redis:
         image: redis:3
         ports:
-            - "6379"
+            - "6379:6379"
+    visualizer:
+        image: dockersamples/visualizer:stable
+        ports:
+            - "8080:8080"
+        volumes:
+            - "/var/run/docker.sock:/var/run/docker.sock"
+        deploy:
+            placement:
+                constraints: [node.role == manager]
