@@ -10,4 +10,4 @@ RUN npm install -g npm-check mocha nodemon
 
 COPY . .
 
-CMD npm run dev
+CMD npm run prod

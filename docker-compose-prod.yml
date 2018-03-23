@@ -1,0 +1,14 @@
+version: '3'
+services:
+    api:
+        build: maestru2a/deallit
+        ports:
+            - "80:80"
+            - "4242:4242"
+        depends_on:
+            - db
+            - redis
+    redis:
+        image: redis:3
+        ports:
+            - "6379"
