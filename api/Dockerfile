@@ -1,0 +1,13 @@
+FROM node:9
+
+MAINTAINER Jean-Baptiste Terrazzoni
+
+WORKDIR /home/app
+
+COPY package*.json ./
+RUN npm install
+RUN npm install -g npm-check mocha nodemon
+
+COPY . .
+
+CMD npm run dev

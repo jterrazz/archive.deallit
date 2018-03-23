@@ -1,0 +1,27 @@
+version: '3'
+services:
+    api:
+        build: ./api
+        ports:
+            - "8081:8081"
+            - "4242:4242"
+        volumes:
+            - ./api:/home/app
+        depends_on:
+            - db
+            - redis
+    db:
+        image: mysql:5
+        ports:
+            - "3306"
+        environment:
+            - MYSQL_ROOT_PASSWORD=root
+            - MYSQL_DATABASE=deallit_dev
+            - MYSQL_USER=worker
+            - MYSQL_PASSWORD=notsecurepassword
+        volumes:
+            - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+    redis:
+        image: redis:3
+        ports:
+            - "6379"

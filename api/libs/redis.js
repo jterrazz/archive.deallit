@@ -6,7 +6,7 @@ const bluebird = require('bluebird');
 bluebird.promisifyAll(redis.RedisClient.prototype);
 bluebird.promisifyAll(redis.Multi.prototype);
 
-const client =	redis.createClient();
+const client =	redis.createClient({ host: 'redis' });
 
 client.on("error", function (err) {
 	console.log(err);

@@ -4,13 +4,11 @@
 	"description": "A work on decentralized marketplaces and online commerce",
 	"main": "server.js",
 	"scripts": {
-		"setup": "npm install -g npm-check mocha nodemon",
+		"setup-dev": "npm install -g npm-check mocha nodemon",
 		"export": "NODE_ENV=export node server.js",
 		"test": "NODE_ENV=test mocha tests/*.js --exit",
 		"dev": "NODE_ENV=development nodemon server.js",
-		"prod": "NODE_ENV=production node server.js",
-		"pm2-dev": "pm2 -i max --name \"MM-api-dev\" start npm -- run dev --",
-		"pm2-prod": "pm2 -i max --name \"MM-api-prod\" start npm -- run prod --"
+		"prod": "NODE_ENV=production node server.js"
 	},
 	"author": "Terrazzoni Jean-Baptiste",
 	"license": "ISC",
@@ -36,10 +34,8 @@
 		"multer": "^1.3.0",
 		"mysql": "^2.15.0",
 		"mysql2": "^1.5.2",
-		"nodemon": "^1.15.1",
 		"ora": "^1.4.0",
 		"redis": "^2.8.0",
-		"response-time": "^2.3.2",
 		"snake-case": "^2.1.0",
 		"snakecase-keys": "^1.1.1",
 		"socket.io": "^2.0.4",
@@ -50,6 +46,7 @@
 		"zeromq": "^4.6.0"
 	},
 	"devDependencies": {
+		"response-time": "^2.3.2",
 		"mocha": "^5.0.3"
 	}
 }

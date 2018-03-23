@@ -1,8 +1,8 @@
 .DS_Store
-node_modules/
-exports/
-uploads/
-npm-debug.log*
+api/node_modules/
+api/exports/
+api/uploads/
+*npm-debug.log*
 
 # Editor directories and files
 .idea
