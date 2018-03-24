@@ -1,10 +1,16 @@
 version: '3'
 services:
+    client:
+        build: ./client-vuejs
+        ports:
+            - "8080:8080"
+        volumes:
+            - ./client-vuejs:/home/client
     api:
         build:
             context: ./api
         ports:
-            - "8081:80"
+            - "8081:8081"
             - "4242:4242"
         volumes:
             - ./api:/home/app
@@ -21,7 +27,7 @@ services:
             - MYSQL_USER=worker
             - MYSQL_PASSWORD=notsecurepassword
         volumes:
-            - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
+            - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql:cached
     redis:
         image: redis:3-alpine
         ports:

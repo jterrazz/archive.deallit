@@ -18,12 +18,18 @@
 
 ### Docker development commands
 ``` bash
-docker-compose up # Build
-docker-compose start
+# Build: will download and logs everything
+docker-compose up -d
 docker-compose stop
-docker-compose down # Destroy
+docker-compose start # npm install
 
-# Clean images
+docker attach CONTAINER_ID # attach terminal to container
+docker exec CONTAINER_ID "..."
+
+# Clean
+docker-compose down
+
+docker rm $(docker ps -aq)
 docker rmi $(docker images -qa)
 ```
 
