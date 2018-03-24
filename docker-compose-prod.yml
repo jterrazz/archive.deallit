@@ -8,7 +8,7 @@ services:
         depends_on:
             - redis
     redis:
-        image: redis:3
+        image: redis:3-alpine
         ports:
             - "6379:6379"
     visualizer:

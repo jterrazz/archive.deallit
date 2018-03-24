@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="492px" height="292px" viewBox="0 0 492 292" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 48.2 (47327) - http://www.bohemiancoding.com/sketch -->
+    <title>down-arrow</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Desktop-HD" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" transform="translate(-948.000000, -191.000000)">
+        <g id="down-arrow" transform="translate(948.000000, 191.000000)" fill="#FFFFFF" fill-rule="nonzero">
+            <path d="M484.132,24.986 L468.016,8.758 C462.944,3.69 456.196,0.898 448.984,0.898 C441.776,0.898 435.02,3.69 429.948,8.758 L246.108,192.606 L62.056,8.554 C56.992,3.486 50.236,0.698 43.028,0.698 C35.82,0.698 29.06,3.486 23.992,8.554 L7.872,24.682 C-2.624,35.17 -2.624,52.254 7.872,62.742 L227.008,282.666 C232.072,287.73 238.82,291.298 246.092,291.298 L246.176,291.298 C253.388,291.298 260.136,287.726 265.2,282.666 L484.132,63.338 C489.204,58.274 491.988,51.322 491.996,44.114 C491.996,36.902 489.204,30.046 484.132,24.986 Z" id="Shape"></path>
+        </g>
+    </g>
+</svg>

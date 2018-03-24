@@ -12,7 +12,7 @@ services:
             - db
             - redis
     db:
-        image: mysql:5
+        image: mysql/mysql-server:5.7.21
         ports:
             - "3306:3306"
         environment:
@@ -23,6 +23,6 @@ services:
         volumes:
             - ./db/dump.sql:/docker-entrypoint-initdb.d/dump.sql
     redis:
-        image: redis:3
+        image: redis:3-alpine
         ports:
             - "6379:6379"

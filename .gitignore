@@ -1,7 +1,4 @@
 .DS_Store
-api/node_modules/
-api/exports/
-api/uploads/
 *npm-debug.log*
 
 # Editor directories and files

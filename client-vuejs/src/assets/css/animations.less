@@ -1,0 +1,61 @@
+@import 'variables.less';
+
+label {
+	transition: all 0.3s ease-out;
+	opacity: 1;
+}
+
+.label-enter,
+.label-leave-active {
+	opacity: 0;
+}
+
+.menu-transition-enter-active, .menu-transition-leave-active {
+	transform: translateY(0px);
+	opacity: 1;
+	transition: all .3s ease-out;
+}
+
+.menu-transition-enter, .menu-transition-leave-to {
+	transform: translateY(-100%);
+	opacity: 0;
+}
+
+.dropdown-transition-enter-active, .dropdown-transition-leave-active {
+	transform: translateY(0px);
+	opacity: 1;
+	transition: all .3s ease-out;
+}
+
+.dropdown-transition-enter, .dropdown-transition-leave-to {
+	transform: translateY(-10px);
+	opacity: 0;
+}
+
+/* DASHBOARD */
+
+#top-bar-wrap,
+.slide-leave-active,
+.slide-enter-active {
+  transition: 0.23s ease-out;
+}
+
+.slide-enter, .slide-leave-to {
+  transform: translate(-100%, 0);
+}
+
+/* POP UP */
+
+.popup-enter, .popup-leave-active {
+	opacity: 0;
+}
+
+.popup-enter .pop-up,
+.popup-leave-active .pop-up {
+	-webkit-transform: scale(1.1);
+	transform: scale(1.1);
+}
+
+.pop-up {
+	transition: all 0.23s ease-out;
+}
