@@ -16,7 +16,7 @@
 			</ul>
 		</div>
 		<ul class="dashboard-product-list">
-			<list-item v-for="product in products" :key="product.productId" :product="product"/>
+			<list-item v-for="product in products" :key="product.productId" :product="product" @click.native="selectedProduct = product.productId" :selected="selectedProduct == product.productId"/>
 		</ul>
 	</div>
 </div>
@@ -52,6 +52,7 @@ export default {
 	data: function() {
 		return {
 			products: [],
+			selectedProduct: 0,
 			tags: [],
 			filters: {
 				tag: null,

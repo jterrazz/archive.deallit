@@ -65,7 +65,8 @@ const runServer = async () => {
 		const server = http.listen(env.API_PORT, () => {
 			logger.info(`API listening`, { port: server.address().port });
 		}).on('error', err => {
-			throw err;
+			logger.error(err);
+			return process.exit();
 		})
 	} catch (err) {
 		logger.error(err);

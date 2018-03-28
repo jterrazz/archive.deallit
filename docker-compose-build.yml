@@ -1,0 +1,9 @@
+version: '3'
+services:
+    client:
+        build: ./client-vuejs
+        ports:
+            - "8888:8888"
+        volumes:
+            - ./client-vuejs:/home/client
+        command: npm run build # webpack bundle analyser not working ?

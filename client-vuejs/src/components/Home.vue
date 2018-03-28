@@ -18,40 +18,35 @@
 	<div v-if="isLogged">
 		<div class="logged">
 			<div class="view--max window-padding">
-				<div class="home-dashboard-user">
-					<image-div class="user-image dashboard-user-image" :url="currentUser.userImage"/>
-					<div class="extend">
-						<div class="user-main-informations view--x">
-							<div>
+				<div class="home-dashboard">
+					<div class="user-dashboard">
+						<div class="view--x">
+							<image-div class="user-image dashboard-user-image" :url="currentUser.userImage"/>
+							<div class="extend">
 								<h2 class="user-name">{{ currentUser.firstName }} {{ currentUser.lastName }}</h2>
 								<div>{{currentUser.mail }} - Member since 5 days</div>
 							</div>
 							<img src="../assets/images/recommended.svg" alt="" class="recommanded-img">
 							<span>98%</span>
 						</div>
-						<div class="dashboard-numbers">
-							<li @click="openMessages()">
-								<div class="view--x">
-									<img src="../assets/images/envelope.svg" alt="">
-									<div>Messages</div>
-								</div>
-								<div class="number">{{ userStatus.nbMessages ? userStatus.nbMessages : 0 }}</div>
-							</li>
-							<li>
-								<div class="view--x">
-									<img src="../assets/images/package.svg" alt="">
-									<div>Actions awaiting you</div>
-								</div>
-								<div class="number">{{ userStatus.nbOrders ? userStatus.nbOrders : 0 }}</div>
-							</li>
-							<li class="no-border">
-								<div class="view--x">
-									<img src="../assets/images/coin.svg" alt="">
-									<div>sold</div>
-								</div>
-								<div class="number">{{ userStatus.nbSells ? userStatus.nbSells : 0 }}</div>
-							</li>
-						</div>
+						<button type="button" class="open-dashboard">Open my dashboard</button>
+					</div>
+					<div class="dashboard-numbers">
+						<li @click="openMessages()" class="first">
+							<div class="number">{{ userStatus.nbMessages ? userStatus.nbMessages : 0 }}</div>
+							<div>Messages</div>
+							<img src="../assets/images/messages.svg" alt="">
+						</li>
+						<li class="second">
+							<div class="number">{{ userStatus.nbOrders ? userStatus.nbOrders : 0 }}</div>
+							<div>TO DO</div>
+							<img src="../assets/images/list.svg" alt="">
+						</li>
+						<li class="no-border third">
+							<div class="number">{{ userStatus.nbSells ? userStatus.nbSells : 0 }}</div>
+							<div>sold</div>
+							<img src="../assets/images/sold.svg" alt="">
+						</li>
 					</div>
 				</div>
 			</div>
@@ -74,11 +69,8 @@
 	</div>
 
 	<div class="view--max window-padding">
-
-		<div class="view--max window-padding">
-			<div class="home-categories">
-				<categories-nav/>
-			</div>
+		<div class="home-categories">
+			<categories-nav/>
 		</div>
 
 		<div>
@@ -100,6 +92,14 @@
 
 <style lang="less" scoped>
 @import 'variables.less';
+
+.open-dashboard {
+	background: rgba(255,255,255,0.8);
+	padding: @s-sm @s-sm;
+	color: @c-text;
+	margin-top: @s-sm;
+	width: 60%;
+}
 
 #main-view.is-not-logged {
 	padding-top: 0;
@@ -153,44 +153,52 @@
 }
 
 .recommanded-img {
-	height: 48px;
+	height: 20px;
+	margin-right: @s-xs;
 }
 
-.home-dashboard-user {
-	display: flex;
-	align-items: flex-start;
-	clear: both;
-	background: rgba(255, 255, 255, 0.95);
-	padding: @s-md;
-	border-radius: @s-radius;
+.home-dashboard {
+	color: white;
 	max-width: 700px;
 	margin: 0 auto;
 }
 
 .dashboard-numbers {
 	display: flex;
-	margin-top: @s-sm;
+	margin-top: @s-md;
 	align-items: stretch;
 	li {
-		border-right: 1px solid @c-darker;
+		padding: @s-sm;
 		cursor: pointer;
 		flex: 1;
-		padding: 0 @s-md;
-	}
-	.view--x {
-		align-items: center;
-		height: 24px;
-	}
-	.no-border {
-		border: 0;
+		margin-right: @s-md;
+		position: relative;
+		text-transform: uppercase;
+		font-size: 13px;
+		font-weight: normal;
 	}
 	img {
 		width: 24px;
-		margin-right: @s-xs;
+		position: absolute;
+		top: @s-sm;
+		right: @s-sm;
 	}
 	.number {
-		font-size: 48px;
-		font-weight: lighter;
+		font-size: 18px;
+		font-weight: bold;
+		margin-bottom: @s-xs;
+	}
+	.first {
+		background: linear-gradient(90deg, rgb(125, 119, 244), rgba(125, 119, 244, 0.5));
+	}
+
+	.second {
+		background: linear-gradient(90deg, rgb(92, 188, 198), rgba(92, 188, 198, 0.5));
+	}
+
+	.third {
+		background: linear-gradient(90deg, rgb(215, 126, 107), rgba(215, 126, 107, 0.5));
+		margin-right: 0;
 	}
 }
 
@@ -225,15 +233,22 @@
 }
 
 .dashboard-user-image {
-	width: 72px;
-	height: 72px;
-	margin-right: @s-md;
+	width: 48px;
+	height: 48px;
+	margin-right: @s-sm;
 }
 
-.user-main-informations {
+.user-dashboard {
 	border-bottom: 1px solid @c-darker;
-	padding-bottom: @s-sm;
-	flex: 1;
+	background: rgb(47, 56, 86);
+	padding: @s-sm;
+	align-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	.view--x {
+		align-self: stretch;
+	}
 }
 
 h1 {
@@ -243,10 +258,12 @@ h1 {
 .user-name {
 	text-transform: uppercase;
 	font-weight: bold;
+	font-size: 15px;
+	margin-bottom: @s-xs;
 }
 
 .logged {
-	background-image: url(https://d2xp4t3rkyux13.cloudfront.net/bg-polygons.png), linear-gradient(90deg, rgb(28, 32, 54), rgb(31, 38, 59), rgb(14, 27, 65));
+	background-image: url(https://d2xp4t3rkyux13.cloudfront.net/bg-polygons.png), linear-gradient(90deg, rgb(30, 35, 54), rgb(30, 35, 54));
 	background-position: center;
 	background-repeat: no-repeat;
 	background-size: cover;

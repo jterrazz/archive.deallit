@@ -18,19 +18,6 @@ Vue.use(ProgressBar)
 Vue.use(VueResource)
 Vue.use(Notifications)
 
-require('vuetify/src/stylus/app.styl');
-import VApp from 'vuetify/es5/components/VApp'
-import Vuetify from 'vuetify/es5/components/Vuetify'
-import VParallax from 'vuetify/es5/components/VParallax'
-
-Vue.use(Vuetify, {
-	components: {
-		VApp,
-		Vuetify,
-		VParallax
-	}
-})
-
 Vue.config.productionTip = false
 Vue.http.interceptors.push(function(request, next) {
 	if (Vue.auth.loggedIn())

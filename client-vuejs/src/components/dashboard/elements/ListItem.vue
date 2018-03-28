@@ -1,20 +1,20 @@
 <template>
-	<li class="dashboard-product-el">
-		<image-div class="product-list-image" :url="product.preview" />
-		<div class="extend">{{ product.name }}</div>
+<li class="dashboard-product-el" v-if="!selected">
+	<image-div class="product-list-image" :url="product.preview" />
+	<div class="extend">{{ product.name }}</div>
 
-		<input-tag :on-change="updateTags" :tags="product.tags"></input-tag>
+	<input-tag :on-change="updateTags" :tags="product.tags"></input-tag>
 
-		<div class="quantity">{{ product.quantity }}</div>
-		<div class="price">{{ product.price }} $</div>
-		<div class="list-dropdown">
-			<span @click="dropdown">Actions</span>
-			<ul v-if="isDropped" class="list-dropdown-content" v-on-clickaway="closeDropdown">
-				<li @click="modifyProduct">Modify</li>
-				<li @click="deleteProduct">Delete</li>
-			</ul>
-		</div>
-	</li>
+	<div class="quantity">{{ product.quantity }}</div>
+	<div class="price">{{ product.price }} $</div>
+	<div class="list-dropdown">
+		<span @click="dropdown">Actions</span>
+		<ul v-if="isDropped" class="list-dropdown-content" v-on-clickaway="closeDropdown">
+			<li @click="modifyProduct">Modify</li>
+			<li @click="deleteProduct">Delete</li>
+		</ul>
+	</div>
+</li>
 </template>
 
 <style lang="less" scoped>
@@ -64,6 +64,7 @@ export default {
 	},
 	props: {
 		product: {type: Object},
+		selected: {type: Boolean},
 	},
 	computed: {
 		image: function() {

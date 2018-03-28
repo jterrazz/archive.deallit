@@ -5,7 +5,7 @@ var config = {
 	network: env.devMode ? 'regtest' : 'mainnet',
 	username: env.BITCOIN_NODE_USER,
 	password: env.BITCOIN_NODE_PASSWORD,
-	port: 18123,
+	port: 8333,
 };
 const client = new BitcoinCore(config)
 

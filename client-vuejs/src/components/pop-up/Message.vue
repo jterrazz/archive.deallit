@@ -4,7 +4,7 @@
 		<div class="back-btn" @click="openMessages()">
 			All messages
 		</div>
-		<image-div class="header-user-image user-image md" :url="user.userImage" />
+		<image-div class="header-user-image user-image" :url="user.userImage" />
 		<div>
 			<div class="header-username">{{ user.firstName }} - {{ user.lastName }}</div>
 			<div>User since 42 years</div>
@@ -21,7 +21,7 @@
 	</div>
 	<div class="message-input-div">
 		<input type="text" v-model="newMessage" placeholder="Write your message" @keyup.enter="sendMessage">
-		<button @click="sendMessage">Send</button>
+		<button class="send-btn" @click="sendMessage">Send</button>
 	</div>
 </div>
 </template>
@@ -90,6 +90,15 @@ export default {
 <style lang="less" scoped>
 @import 'variables.less';
 
+.send-btn {
+	padding: 0 @s-md;
+}
+
+.pop-up {
+	min-width: 600px;
+	min-height: 70vh;
+}
+
 .message-header {
 	display: flex;
 	align-items: center;
@@ -107,6 +116,8 @@ export default {
 
 .header-user-image {
 	margin-right: @s-sm;
+	height: 42px;
+	width: 42px;
 }
 
 .back-btn {

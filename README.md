@@ -1,21 +1,23 @@
-# Instructions
+# Technologies
 
-**Technologies**
+**Server**
 - Node.js
 - MySQL (Aurora on AWS)
 - Redis
 - ZeroMQ
 - Bitcoind (bitcoin-core)
 
+**Client**
+- VueJS
+
 **Services**
-- *VueJS client:* [github](https://github.com/Maestru2a/deallit-client)
 - *AWS:* S3, EC2, Lambda, RDS, ELB, Cloudfront
 - Sendgrid: mail API
 - DNS: namecheap + cloudflare
 - SSL: namecheap
 
 ---
-
+# Instructions
 ### Docker development commands
 ``` bash
 # Build: will download and logs everything
@@ -23,8 +25,9 @@ docker-compose up -d
 docker-compose stop
 docker-compose start # npm install
 
-docker attach CONTAINER_ID # attach terminal to container
-docker exec CONTAINER_ID "..."
+docker logs -f CONTAINER_ID # follow logs
+docker attach CONTAINER_ID # --sig-proxy=false to ctrl c
+docker exec -it CONTAINER_ID "..." # /bin/sh to start new terminal
 
 # Clean
 docker-compose down
@@ -65,14 +68,4 @@ docker-machine create --driver virtualbox master/worker-1
 docker-machine ssh myvm1 "docker swarm init --advertise-addr <myvm1 ip>"
 
 eval $(docker-machine env MANAGER_NODE) # be the manager
-```
-
-> Visualizer
-```
-docker service create \
-	--name=viz \
-	--publish=9999:8080 \
-	--constraint=node.role==manager \
-	--mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
-	dockersamples/visualizer
 ```

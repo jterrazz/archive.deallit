@@ -1,7 +1,7 @@
 <template>
 <div id="main-view">
 	<div class="market-header relative">
-		<v-parallax class="market-header-image" :src="market.marketBackground"/>
+		<image-div class="market-header-image" :url="market.marketBackground"/>
 		<div class="view--max window-padding">
 			<div class="market-header-informations view--y">
 				<h1>{{ market.firstName }}</h1>

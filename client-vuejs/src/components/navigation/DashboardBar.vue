@@ -5,9 +5,9 @@
 	<router-link :to="{ name: 'dashboard-market' }">
 		<li :class="{ on: route.name == 'dashboard-market' }"><img src="../../assets/images/online-shop.svg" alt="">Presentation</li>
 	</router-link>
-	<router-link :to="{ name: 'dashboard-categories' }">
+	<!-- <router-link :to="{ name: 'dashboard-categories' }">
 		<li :class="{ on: route.name == 'dashboard-categories' }"><img src="../../assets/images/tag.svg" alt="">Categories</li>
-	</router-link>
+	</router-link> -->
 	<router-link :to="{ name: 'dashboard-products' }">
 		<li :class="{ on: route.name == 'dashboard-products' }"><img src="../../assets/images/package-1.svg" alt="">Products</li>
 	</router-link>
@@ -110,7 +110,7 @@ h2 {
 	}
 	li.on, li:hover {
 		opacity: 1;
-		background: @c-blue;
+		background: @c-dark;
 		color: white;
 		img {
 			opacity: 1;

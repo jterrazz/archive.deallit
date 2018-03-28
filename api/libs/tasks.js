@@ -24,12 +24,12 @@ module.exports = {
 
 	start: async function() {
 		if (env.bitcoinTasksOn) {
-			// await bitcoinLib.utils.createTransaction("n1UFjwYKikZ1ABab9jKnYjy9ETXUYodqQM", "mtKirnwxrdaXfJKqMhVFpE2hyvvz8ihZ4A", 5);
-			await bitcoinLib.services.hardCacheMonitoredAddresses();
-			await bitcoinLib.services.hardUpdateMonitoredAddresses();
-			await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
-			await bitcoinLib.states.hardUpdateConfirmedTransactions();
+			// await bitcoinLib.services.hardCacheMonitoredAddresses();
+			// await bitcoinLib.services.hardUpdateMonitoredAddresses();
+			// await bitcoinLib.states.hardUpdateUnconfirmedTransactions(); // TODO If restart and user waiting ...
+			// await bitcoinLib.states.hardUpdateConfirmedTransactions();
 
+			// await bitcoinLib.utils.createTransaction("n1UFjwYKikZ1ABab9jKnYjy9ETXUYodqQM", "mtKirnwxrdaXfJKqMhVFpE2hyvvz8ihZ4A", 5);
 			// if (err.message == "Address not found in wallet") { // TODO Test error triggered in tests
 			// 	console.log("add address");
 			// } else if (err.message == "Wallet is currently rescanning. Abort existing rescan or wait.") {

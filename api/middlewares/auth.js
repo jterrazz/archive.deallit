@@ -1,7 +1,7 @@
 const	Boom =			require('boom'),
 		fs =			require('fs'),
 		jwt =			require('jsonwebtoken'),
-		bcrypt =		require('bcrypt'),
+		bcrypt =		require('bcryptjs'),
 		validator = 	require('validator'),
 		speakeasy =		require('speakeasy'),
 		env =			require('../config/env'),
@@ -34,7 +34,6 @@ module.exports = {
 			mail: req.body.mail,
 			password: req.body.password
 		};
-
 		if (req.user || !userData || !userData.mail || !validator.isEmail(userData.mail) || !userData.password)
 			return next(Boom.badData("Login informations are missing or are not valid"));
 
@@ -46,6 +45,7 @@ module.exports = {
 		var isValid = await bcrypt.compare(userData.password, user.password);
 		if (!isValid)
 			return next(Boom.unauthorized("Password incorrect"));
+			console.log('1111');
 		var token = await createToken(user.user_id, user.two_fa_secret);
 		res.json({ token });
 	}),

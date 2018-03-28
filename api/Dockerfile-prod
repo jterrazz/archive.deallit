@@ -2,13 +2,10 @@ FROM node:9-alpine
 
 MAINTAINER Jean-Baptiste Terrazzoni
 
-RUN apk add --no-cache python3
-
 WORKDIR /home/app
 
 COPY package*.json ./
 RUN npm install
-RUN npm install -g npm-check mocha nodemon
 
 COPY . .
 

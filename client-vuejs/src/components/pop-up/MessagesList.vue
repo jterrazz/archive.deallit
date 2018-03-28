@@ -7,7 +7,7 @@
 	</div>
 
 	<li class="message" v-for="conversation in conversations" @click="openMessage(conversation)">
-		<image-div :url="conversation.userImage" class="user-image md"/>
+		<image-div :url="conversation.userImage" class="user-image"/>
 		<div>
 			<div class="conversation-name">{{ conversation.firstName }}</div>
 			<div class="message-text">{{ conversation.message }}</div>
@@ -52,6 +52,11 @@ export default {
 <style lang="less" scoped>
 @import 'variables.less';
 
+.pop-up {
+	min-width: 600px;
+	min-height: 70vh;
+}
+
 .messages-header {
 	width: 100%;
 	padding: 18px @s-sm;
@@ -75,6 +80,8 @@ export default {
 
 .user-image {
 	margin-right: @s-sm;
+	height: 42px;
+	width: 42px;
 }
 
 .conversation-name {

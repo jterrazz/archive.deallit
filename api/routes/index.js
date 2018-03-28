@@ -17,10 +17,10 @@ module.exports = function(app) {
 	 */
 
 	app.use((err, req, res, next) => {
+		logger.error(err);
 		if (err instanceof Error && err.isBoom) {
 			res.status(err.output.statusCode).json(err.output.payload);
 		} else {
-			logger.error(err);
 			res.sendStatus(400);
 		}
 	})
