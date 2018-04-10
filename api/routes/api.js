@@ -7,6 +7,8 @@ const	Boom =			require('boom'),
 		dbUser =		require('../models/user'),
 		dbMarket =		require('../models/market'),
 		dbProduct =		require('../models/product'),
+		dbNotification =		require('../models/notification'),
+		pool =			require('../models/index').poolPromise,
 		tasks =			require('../libs/tasks'),
 		checker =		require('../libs/checker'),
 		bitcoinLib =		require('../libs/currencies/bitcoin'),
@@ -21,32 +23,32 @@ const	Boom =			require('boom'),
  * 3. Parse all inputs (TODO !!!)
  */
 
-router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
-	var currency = req.params.currency;
-
-	if (['BTC', 'ETH'].indexOf(currency) < 0)
-		return next(Boom.badData("Wallet currency is invalid"));
-	if (currency == 'BTC')
-		var type = env.devMode ? 't_btc' : 'btc';
-	else if (currency == 'ETH')
-		var type = env.devMode ? 't_eth' : 'eth';
-
-	var data = await dbUser.getPublicAddress(req.user.userId, type, false);
-	if (data)
-		return res.json({ public_address: data });
-
-	switch (currency) {
-		case 'BTC':
-			var wif = bitcoinLib.utils.createRandomWIF();
-			var publicAddress = bitcoinLib.utils.getLegacyAddress(wif);
-
-			await dbUser.saveWallet(type, 5, publicAddress, wif, false);
-			break;
-		case 'ETH':
-			return next(Error("ETH not supported yet"));
-	}
-	res.json({ publicAddress: publicAddress });
-}))
+// router.get('/wallet/:currency', auth.requireUser, asyncHandler(async (req, res, next) => {
+// 	var currency = req.params.currency;
+//
+// 	if (['BTC', 'ETH'].indexOf(currency) < 0)
+// 		return next(Boom.badData("Wallet currency is invalid"));
+// 	if (currency == 'BTC')
+// 		var type = env.devMode ? 't_btc' : 'btc';
+// 	else if (currency == 'ETH')
+// 		var type = env.devMode ? 't_eth' : 'eth';
+//
+// 	var data = await dbUser.getPublicAddress(req.user.userId, type, false);
+// 	if (data)
+// 		return res.json({ public_address: data });
+//
+// 	switch (currency) {
+// 		case 'BTC':
+// 			var wif = bitcoinLib.utils.createRandomWIF();
+// 			var publicAddress = bitcoinLib.utils.getLegacyAddress(wif);
+//
+// 			await dbUser.saveWallet(type, 5, publicAddress, wif, false);
+// 			break;
+// 		case 'ETH':
+// 			return next(Error("ETH not supported yet"));
+// 	}
+// 	res.json({ publicAddress: publicAddress });
+// }))
 
 /**
  * File uploads
@@ -69,6 +71,15 @@ router.post('/auth/register', auth.register);
 
 router.post('/auth/login-two-fa', auth.confirmTwoFA);
 
+router.post('/confirm-mail/:code', asyncHandler(async (req, res, next) => {
+	var code = req.params.code;
+
+	var [user] = await pool.query("UPDATE users SET waiting_confirmation = NULL WHERE waiting_confirmation = ?", code);
+
+	if (!user.affectedRows)
+		throw Boom.badData("Confirmation code doesnt match any mail");
+	res.sendStatus(200);
+}))
 
 router.route('/auth/manage-2fa')
 	.get(auth.requireUser, (req, res, next) => {
@@ -173,7 +184,7 @@ router.get('/conversations', auth.requireUser, asyncHandler(async (req, res) => 
 }))
 
 router.get('/notifications', auth.requireUser, asyncHandler(async (req, res) => {
-	var notifications = await dbUser.getNotifications(req.user.userId);
+	var notifications = await dbNotification.getNotifications(req.user.userId);
 
 	res.json(notifications);
 }))

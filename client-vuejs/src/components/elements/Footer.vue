@@ -12,6 +12,7 @@
 				<h1>Minimize the intermediaries, don't compromise the security. You are the one in control</h1>
 			</div>
 		</div>
+		<button type="button" name="button">Register</button>
 	</div>
 	<div id="footer-second">
 		<div class="view--max window-padding view--x">
@@ -77,6 +78,9 @@ export default {
 	computed: {
 		staticUrl: function() {
 			return env.cdnUrl + 'assets/'
+		},
+		currentUser: function() {
+			return this.$store.state.currentUser;
 		}
 	}
 }

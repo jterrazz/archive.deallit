@@ -77,19 +77,6 @@ const user = {
 		})
 	},
 
-	getNotifications: (userId) => {
-		return new Promise((resolve, reject) => {
-			var query = "SELECT * FROM user_notifications WHERE user_id=?";
-
-			pool.query(query, [userId], (err, data) => {
-				if (err)
-					return reject(err);
-				analyzer.decodeNotifications(data);
-				resolve(data);
-			})
-		});
-	},
-
 	getMessages: (userId, contactId) => {
 		return new Promise((resolve, reject) => {
 			var query = "SELECT * FROM messages m WHERE ? IN (m.from_id, m.to_id) AND ? IN (m.from_id, m.to_id) LIMIT 20";

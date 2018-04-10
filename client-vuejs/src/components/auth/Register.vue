@@ -7,6 +7,9 @@
 			<label for="login-password">Password</label>
 			<input id="login-password" type="password" name="password" class="input--grey" v-model="user.password" @keyup.enter="tryRegister">
 		</div>
+		<div v-if="err" class="error-text">
+			{{ err.body.message }}
+		</div>
 		<button type="button" class="button--blue button--xl" @click="tryRegister">Register</button>
 		<router-link :to="{ name: 'login' }" class="auth-nav">Already have an account ?</router-link>
 	</form>
@@ -17,18 +20,27 @@
 		name: "Register",
 		data: function() {
 			return {
-				user: {}
+				user: {},
+				err: null
 			}
 		},
 		methods: {
 			tryRegister: function() {
 				this.$http.post('/auth/register', this.user)
-					.then((ret) => {
-
+					.then(ret => {
+						this.$router.push({ name: 'need-mail-confirmation' });
 					}, (err) => {
-
+						this.err = err;
 					})
 			}
 		}
 	}
 </script>
+
+<style lang="less" scoped>
+@import 'variables.less';
+
+.error-text {
+	margin-bottom: @s-sm;
+}
+</style>

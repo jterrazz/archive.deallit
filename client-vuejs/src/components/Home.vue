@@ -29,7 +29,9 @@
 							<img src="../assets/images/recommended.svg" alt="" class="recommanded-img">
 							<span>98%</span>
 						</div>
-						<button type="button" class="open-dashboard">Open my dashboard</button>
+						<router-link :to="{ name: 'dashboard-market' }">
+							<button type="button" class="open-dashboard">Open my dashboard</button>
+						</router-link>
 					</div>
 					<div class="dashboard-numbers">
 						<li @click="openMessages()" class="first">
@@ -39,7 +41,7 @@
 						</li>
 						<li class="second">
 							<div class="number">{{ userStatus.nbOrders ? userStatus.nbOrders : 0 }}</div>
-							<div>TO DO</div>
+							<div>Notifications</div>
 							<img src="../assets/images/list.svg" alt="">
 						</li>
 						<li class="no-border third">
@@ -95,10 +97,9 @@
 
 .open-dashboard {
 	background: rgba(255,255,255,0.8);
-	padding: @s-sm @s-sm;
+	padding: @s-sm @s-md;
 	color: @c-text;
 	margin-top: @s-sm;
-	width: 60%;
 }
 
 #main-view.is-not-logged {
@@ -174,7 +175,7 @@
 		margin-right: @s-md;
 		position: relative;
 		text-transform: uppercase;
-		font-size: 13px;
+		font-size: 12.5px;
 		font-weight: normal;
 	}
 	img {

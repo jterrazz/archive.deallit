@@ -36,11 +36,11 @@
 			<button type="button" class="button--top-bar button--blue">Log In</button>
 		</router-link>
 
-		<router-link v-if="isLogged" :to="{ name: 'payment' }">
+		<!-- <router-link v-if="isLogged" :to="{ name: 'payment' }">
 			<div class="top-bar-el-hover large-padding" :class="{active: route.name === 'payment'}">
 				Waiting payment
 			</div>
-		</router-link>
+		</router-link> -->
 
 		<router-link :to="{ name: 'dashboard-products' }">
 			<div class="top-bar-el-hover" v-if="isLogged">

@@ -18,8 +18,19 @@ Vue.use(ProgressBar)
 Vue.use(VueResource)
 Vue.use(Notifications)
 
+//TODO better than first load (check data directly) ???
+
 Vue.config.productionTip = false
 Vue.http.interceptors.push(function(request, next) {
+	var isJSON = function(str) {
+		try {
+			JSON.parse(str);
+		} catch (e) {
+			return false;
+		}
+		return true;
+	}
+
 	if (Vue.auth.loggedIn())
 		request.headers.set('Authorization', 'Bearer ' + Vue.auth.getToken())
 	if (request.url[0] === '/')
@@ -35,19 +46,32 @@ Vue.http.interceptors.push(function(request, next) {
 		}
 	})
 })
-
-//DO better than first load (check data directly)
+// Vue.auth.destroyToken();
 router.beforeEach((to, from, next) => {
 	var token = Vue.auth.getToken();
 	var decodedJWT = token ? jwtDecode(token) : null;
 	var isLogged = Vue.auth.loggedIn();
 	var currentUserExist = !!Object.keys(store.state.currentUser).length;
 
-	if (currentUserExist && !isLogged) {
-		store.commit('clearCurrentUser')
-	}
+	document.title = to.meta.title;
 
-	if (!currentUserExist && isLogged) {
+	/**
+	 * Sync user state to the token status
+	 */
+
+	if (decodedJWT && decodedJWT.needMailConfirmation) {
+		if (to.name !== 'need-mail-confirmation')
+			return next({
+				name: 'need-mail-confirmation'
+			})
+	} else if (decodedJWT && decodedJWT.stillNeedToTwoFA) {
+		if (to.name !== 'need-two-fa')
+			return next({
+				name: 'need-two-fa'
+			})
+	} else if (currentUserExist && !isLogged) {
+		store.commit('clearCurrentUser');
+	} else if (!currentUserExist && isLogged) {
 		var userId = decodedJWT.userId;
 		store.commit('setCurrentUser', {
 			userId: userId
@@ -59,11 +83,6 @@ router.beforeEach((to, from, next) => {
 			}, err => {
 				store.commit('clearCurrentUser');
 			})
-	}
-
-	if (!currentUserExist && isLogged) {
-		var userId = decodedJWT.userId;
-
 		Vue.http.get('/status')
 			.then(ret => {
 				store.commit('setStatus', camelcaseKeys(ret.body));
@@ -72,7 +91,10 @@ router.beforeEach((to, from, next) => {
 			})
 	}
 
-	document.title = to.meta.title;
+	/**
+	 * Verify path meta
+	 */
+
 	if (isLogged && from.query.redirect) {
 		var path = from.query.redirect;
 
@@ -92,7 +114,6 @@ router.beforeEach((to, from, next) => {
 			name: 'home'
 		})
 	}
-
 	next();
 })
 
@@ -105,12 +126,3 @@ new Vue({
 		App
 	},
 })
-
-function isJSON(str) {
-	try {
-		JSON.parse(str);
-	} catch (e) {
-		return false;
-	}
-	return true;
-}

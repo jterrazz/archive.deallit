@@ -5,12 +5,16 @@ import Home from '../components/Home'
 import Product from '../components/Product'
 import Categorie from '../components/Categorie'
 import Market from '../components/Market'
+
 import Auth from '../components/Auth'
 import Login from '../components/auth/Login'
 import Register from '../components/auth/Register'
-import Search from '../components/Search'
+import NeedTwoFA from '../components/auth/NeedTwoFA'
+import NeedMailConfirmation from '../components/auth/NeedMailConfirmation'
+import MailConfirmation from '../components/auth/MailConfirmation'
 
-import Payment from '../components/Payment'
+import Search from '../components/Search'
+// import Payment from '../components/Payment'
 
 import Sell from '../components/Sell'
 import Dashboard from '../components/Dashboard'
@@ -57,6 +61,21 @@ export default new Router({
 					meta: { requireNotMember: true },
 					component: Register
 				},
+				{
+					path: '/confirm-mail/:confirmationCode',
+					name: 'mail-confirmation',
+					component: MailConfirmation
+				},
+				{
+					path: '/need-mail-confirmation',
+					name: 'need-mail-confirmation',
+					component: NeedMailConfirmation
+				},
+				{
+					path: '/need-two-fa',
+					name: 'need-two-fa',
+					component: NeedTwoFA
+				},
 			]
 		},
 		{
@@ -90,12 +109,12 @@ export default new Router({
 			meta: { requireMember: true, noFooter: true },
 			component: Sell
 		},
-		{
-			path: '/payment',
-			name: 'payment',
-			meta: { requireMember: true, noFooter: true },
-			component: Payment
-		},
+		// {
+		// 	path: '/payment',
+		// 	name: 'payment',
+		// 	meta: { requireMember: true, noFooter: true },
+		// 	component: Payment
+		// },
 		{
 			path: '/dashboard',
 			component: Dashboard,

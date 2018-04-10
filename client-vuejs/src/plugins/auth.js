@@ -30,9 +30,9 @@ var AuthPlugin = {
 
 		if (token) {
 			var decodedJWT = jwtDecode(token);
-			if (!decodedJWT.stillNeedToTwoFA)
-				return true;
+			return true;
 		}
+		this.destroyToken();
         return false;
     },
 };

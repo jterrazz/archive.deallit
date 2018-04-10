@@ -21,3 +21,10 @@ npm run test
 npm-check # update dependencies
 
 ```
+
+# AWS File API
+Accepted sizes :
+- 200x200
+- 400x400
+- 800x800
+- 1600x300

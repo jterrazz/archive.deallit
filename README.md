@@ -1,3 +1,21 @@
+# TODO
+
+- 1. Version presentable
+- 2. Project android
+- 3. Exemples solidity
+- Remove temp bitcoin
+- Inscription mail
+- 2ID Page
+- Notifications
+- Store Page
+- Manage follows
+- Home UX
+- Search UX
+- Dashboard UX
+- Ratings
+- Address system
+- Go throught order -> payment type -> Accept
+
 # Technologies
 
 **Server**

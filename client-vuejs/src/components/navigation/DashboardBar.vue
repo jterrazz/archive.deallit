@@ -18,9 +18,9 @@
 	<div class="dashboard-separator"></div>
 	<h2>User</h2>
 
-	<router-link :to="{ name: 'wallets' }">
+	<!-- <router-link :to="{ name: 'wallets' }">
 		<li :class="{ on: route.name == 'wallets' }"><img src="../../assets/images/megaphone.svg" alt="">Wallet</li>
-	</router-link>
+	</router-link> -->
 	<router-link :to="{ name: 'dashboard-todo' }">
 		<li :class="{ on: route.name == 'dashboard-todo' }"><img src="../../assets/images/megaphone.svg" alt="">Orders</li>
 	</router-link>
