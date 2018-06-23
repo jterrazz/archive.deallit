@@ -16,6 +16,9 @@ This project contains fake passwords, fake API keys, and empty Bitcoin addresses
 docker-compose up # -d for daemon
 
 # Access website on localhost:8080
+# Default credentials :
+# mail: test2@test.com
+# pwd: test
 ```
 
 # Technologies
