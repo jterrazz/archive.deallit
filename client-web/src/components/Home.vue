@@ -353,6 +353,9 @@ export default {
 						this.lastProducts = ret.body;
 						resolve()
 					})
+					.catch((err) => {
+						console.log(err);
+					})
 			})
 		},
 

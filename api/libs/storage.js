@@ -74,6 +74,6 @@ module.exports = {
 				ftArray.push(uploadToAWS(filename, `uploads/${ filename }`))
 		});
 
-		return Promise.all(ftArray);
+		// return Promise.all(ftArray); // TODO Activate again when AWS is back
 	}
 }

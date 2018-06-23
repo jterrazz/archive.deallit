@@ -1,5 +1,5 @@
 <template>
-<li class="dashboard-product-el" v-if="!selected">
+<li class="dashboard-product-el">
 	<image-div class="product-list-image" :url="product.preview" />
 	<div class="extend">{{ product.name }}</div>
 

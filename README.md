@@ -1,50 +1,60 @@
-# TODO
+# Project
 
-- 1. Version presentable
-- 2. Project android
-- 3. Exemples solidity
-- Remove temp bitcoin
-- Inscription mail
-- 2ID Page
-- Notifications
-- Store Page
-- Manage follows
-- Home UX
-- Search UX
-- Dashboard UX
-- Ratings
-- Address system
-- Go throught order -> payment type -> Accept
+!!! Due to my AWS Account being closed,
+Most CDN related functionalities are not currently working
+
+Structure :
+- **api** : API written in NodeJS
+- **client-web** : VueJS Web client
+- **db: MySQL** database for development and production
+- **setup** : Instructions for AWS
+
+This project contains fake passwords, fake API keys, and empty Bitcoin addresses
+
+``` bash
+# Start with
+docker-compose up # -d for daemon
+
+# Access website on localhost:8080
+```
 
 # Technologies
+
+**Docker** for development and production
 
 **Server**
 - Node.js
 - MySQL (Aurora on AWS)
 - Redis
-- ZeroMQ
+- ZeroMQ (bitcoin-core events)
 - Bitcoind (bitcoin-core)
 
 **Client**
 - VueJS
+- Webpack
 
 **Services**
-- *AWS:* S3, EC2, Lambda, RDS, ELB, Cloudfront
-- Sendgrid: mail API
-- DNS: namecheap + cloudflare
-- SSL: namecheap
+- AWS : S3, EC2, Lambda, RDS, ELB, Cloudfront, WAF
+- Sendgrid : mail API
+- DNS : namecheap + cloudflare
+- SSL : namecheap or letsencrypt
+
+**Tests**
+- Mocha
 
 ---
-# Instructions
+# Usefull commands
 ### Docker development commands
 ``` bash
-# Build: will download and logs everything
+# Will start everything
 docker-compose up -d
+
+# Use commands
 docker-compose stop
 docker-compose start # npm install
 
-docker logs -f CONTAINER_ID # follow logs
-docker attach CONTAINER_ID # --sig-proxy=false to ctrl c
+docker logs -f CONTAINER_ID # show logs
+docker attach CONTAINER_ID # --sig-proxy=false to allow ctrl-c
 docker exec -it CONTAINER_ID "..." # /bin/sh to start new terminal
 
 # Clean
@@ -52,6 +62,9 @@ docker-compose down
 
 docker rm $(docker ps -aq)
 docker rmi $(docker images -qa)
+
+# Commands for testing
+npm run test # in api folder
 ```
 
 ### Docker production commands
@@ -87,3 +100,20 @@ docker-machine ssh myvm1 "docker swarm init --advertise-addr <myvm1 ip>"
 
 eval $(docker-machine env MANAGER_NODE) # be the manager
 ```
+
+# TODO
+
+-
+- Find app for todo tasks
+- Remove temp bitcoin
+- Inscription mail
+- 2ID Page
+- Notifications
+- Store Page
+- Manage follows
+- Home UX
+- Search UX
+- Dashboard UX
+- Ratings
+- Address system
+- Go through order -> payment type -> Accept

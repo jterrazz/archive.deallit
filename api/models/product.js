@@ -75,12 +75,14 @@ const product = {
 			if (filters.page && validator.isNumeric(filters.page))
 				query+= `, ${ filters.page } `
 
+
 			pool.query(query, async (err, products) => {
 				if (err)
 					return reject(err);
 
 				analyzer.decodeImagesURL(products);
 				analyzer.decodeTags(products);
+
 				try {
 					await analyzer.setPrices(products);
 					return resolve(products);

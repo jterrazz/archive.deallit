@@ -2,7 +2,7 @@
 <div class="">
 	<h1>We need you to check your mails</h1>
 	<p>Click on the link send to your mail address</p>
-	<p>Logged as blabla</p>
+	<p>Logged as ...</p>
 	<button type="button" @click="logout">Disconnect</button>
 </div>
 </template>

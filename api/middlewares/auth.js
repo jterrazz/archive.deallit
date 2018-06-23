@@ -100,9 +100,11 @@ module.exports = {
 		const newUser = {
 			mail: user.mail,
 			password: user.password,
-			waiting_confirmation: randomstring.generate({
-				length: 256,
-			}),
+			// TODO Create the mail verification
+
+			// waiting_confirmation: randomstring.generate({
+			// 	length: 256,
+			// }),
 		}
 
 		// TODO check mail validity, password

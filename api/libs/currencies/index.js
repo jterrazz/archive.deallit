@@ -13,21 +13,27 @@ const queryRates = async () => {
 	var eurbtc = [];
 	var usdeur = [];
 
-	var blockchainData = await axios.get("https://blockchain.info/fr/ticker");
-	var cmcData = await axios.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=EUR");
-	var fixerData = await axios.get("https://api.fixer.io/latest");
-
-	usdbtc.push(blockchainData.data.USD.last, Number(cmcData.data[0].price_usd));
-	eurbtc.push(blockchainData.data.EUR.last, Number(cmcData.data[0].price_eur));
-	usdeur.push(fixerData.data.rates.USD);
-
-	if (stats.stdev(usdbtc) > 200 || stats.stdev(eurbtc) > 180 || stats.stdev(usdeur) > 0.02)
-		throw Error("Rates too different");
-
+	// var blockchainData = await axios.get("https://blockchain.info/fr/ticker");
+	// var cmcData = await axios.get("https://api.coinmarketcap.com/v1/ticker/bitcoin/?convert=EUR");
+	// var fixerData = await axios.get("https://api.fixer.io/latest");
+	//
+	// usdbtc.push(blockchainData.data.USD.last, Number(cmcData.data[0].price_usd));
+	// eurbtc.push(blockchainData.data.EUR.last, Number(cmcData.data[0].price_eur));
+	// usdeur.push(fixerData.data.rates.USD);
+	//
+	// if (stats.stdev(usdbtc) > 200 || stats.stdev(eurbtc) > 180 || stats.stdev(usdeur) > 0.02)
+	// 	throw Error("Rates too different");
+	//
+	// return {
+	// 	USDBTC: stats.mean(usdbtc),
+	// 	EURBTC: stats.mean(eurbtc),
+	// 	USDEUR: stats.mean(usdeur),
+	// };
+	//
 	return {
-		USDBTC: stats.mean(usdbtc),
-		EURBTC: stats.mean(eurbtc),
-		USDEUR: stats.mean(usdeur),
+		USDBTC: 1,
+		EURBTC: 1,
+		USDEUR: 1,
 	};
 }
 

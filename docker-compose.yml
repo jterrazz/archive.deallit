@@ -2,11 +2,11 @@ version: '3'
 services:
     client:
         container_name: client #Dont use if scaling number of ps
-        build: ./client-vuejs
+        build: ./client-web
         ports:
             - "8080:8080"
         volumes:
-            - ./client-vuejs:/home/client
+            - ./client-web:/home/client
     api:
         container_name: api
         build:

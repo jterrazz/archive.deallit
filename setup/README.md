@@ -1,5 +1,13 @@
-# AWS Helper
-## Image resize on the fly and serverless
+# AWS Setup helper
+## 1. Image getter
+
+Server only permanently store the original image.
+The client will request the image with a LxH param :
+- If the size doesn't exist, create it and cache it
+- If the image exist, send the cached image
+
+This doesn't use any server thanks to AWS Lambda
+
 ##### S3 Bucket
 
 Set public permission
@@ -69,9 +77,9 @@ Add http rule to the S3 static settings
 ```
 ##### Cloudfront
 - Set server name to endpoint URL
-- Set default cache to 0 for paths *x*.png
+- Set default cache time to 0 for paths *x*.png
 
-# SSL registration
+## 2. SSL registration
 https://blog.alejandrocelaya.com/2016/08/16/setup-a-lets-encrypt-certificate-in-a-aws-elastic-load-balancer/
 ``` bash
 ./certbot-auto certonly --agree-tos --manual --preferred-challenges dns --server https://acme-v02.api.letsencrypt.org/directory -d "*.<your host>"

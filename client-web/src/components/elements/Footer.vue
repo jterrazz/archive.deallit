@@ -3,22 +3,22 @@
 	<div id="footer-first">
 		<div class="view--max window-padding view--x">
 			<div class="">
-				<h1>The first experience based on your interests</h1>
+				<h1>ARG 1</h1>
 			</div>
 			<div class="">
-				<h1>Everybody is at the same level, start selling today : expend you local and international market</h1>
+				<h1>ARG 2</h1>
 			</div>
 			<div class="">
-				<h1>Minimize the intermediaries, don't compromise the security. You are the one in control</h1>
+				<h1>ARG 3</h1>
 			</div>
 		</div>
-		<button type="button" name="button">Register</button>
+		<!-- <button type="button" name="button">Register</button> -->
 	</div>
 	<div id="footer-second">
 		<div class="view--max window-padding view--x">
 			<div>
 				<h1>Start selling now</h1>
-				<p>Individuals and real stores</p>
+				<p>Physical + Virtual stores</p>
 			</div>
 			<img src="../../assets/images/store.svg" alt="" class="store-img">
 			<button class="button--xl button--blue">Sell your products</button>
@@ -30,14 +30,9 @@
 				<label for="">Language</label>
 				<select class="" name="">
 					<option value="">English</option>
-					<!-- <option value="">Francais</option> -->
+					<option value="">Francais - not implemented yet</option>
 				</select>
-				<!-- <label for="">Currency</label>
-				<select class="" name="">
-					<option value="">EUR</option>
-					<option value="">USD</option>
-					<option value="">BTC</option>
-				</select> -->
+
 				<div class="made-by">Made by 42 students</div>
 				<a href="http://42.fr/">
 					<img class="made-in-img" :src="staticUrl + '42-logo.png'" alt="42">

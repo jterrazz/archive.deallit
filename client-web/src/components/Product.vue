@@ -26,9 +26,9 @@
 								<image-div :url="product.userImage" class="user-image user-image--md"/>
 								{{ product.firstName }} {{ product.lastName }}
 						</router-link>
-						<div>Sold by {{ product.firstName }} {{ product.lastName }} - {{ product.city }} ffffrance - 322222 fevrier</div>
+						<div>Sold by {{ product.firstName }} {{ product.lastName }} - {{ product.city }} - 322222 fevrier</div>
 						ratings
-						5 last products small previews
+						+ add 5 last products small previews
 					</div>
 					<div class="product-price">{{ priceStr }}</div>
 					<div class="product-interactions">

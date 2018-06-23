@@ -8,7 +8,7 @@
 		</div>
 
 		<h2>Delete my account</h2>
-		<button @click="confirmPopup" name="button">Tititi</button>
+		<button @click="confirmPopup" name="button">Confirm</button>
 	</div>
 </template>
 

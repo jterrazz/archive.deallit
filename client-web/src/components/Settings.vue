@@ -13,7 +13,7 @@
 					<li :class="{ on: router === 'settings-account' }">Account</li>
 				</router-link>
 
-				Jean Baptiste
+				REPLACE BY USERNAME
 			</ul>
 		</nav>
 

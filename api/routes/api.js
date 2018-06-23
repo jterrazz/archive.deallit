@@ -266,6 +266,7 @@ router.get('/s/:searched', asyncHandler(async (req, res) => {
 }))
 
 router.get('/products', asyncHandler(async (req, res, next) => {
+	console.log("dddddddd");
 	var products = await dbProduct.getMany(req.query);
 
 	res.json(products);
