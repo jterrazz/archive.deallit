@@ -34,6 +34,7 @@ docker-compose up # -d for daemon
 
 **Client**
 - VueJS
+- Less
 - Webpack
 
 **Services**
