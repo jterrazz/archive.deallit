@@ -2,7 +2,7 @@
 
 > A social platform where you can create your own store and sell products using cryptocurrencies.
 
-![screens.png](/Users/jterrazz/Projects/deallit-deprecated/doc/screens.png)
+![screens.png](./doc/screens.png)
 
 This project was made when I was learning about *frontend / backend / bitcoin* back in *january 2018*. It contains fake passwords, API keys and emtpy bitcoin addresses.
 
