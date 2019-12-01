@@ -2,6 +2,8 @@
 
 > A social platform where you can create your own store and sell products using cryptocurrencies.
 
+
+![screen0.png](./doc/screen-00.png)
 ![screens.png](./doc/screens.png)
 
 This project was made when I was learning about *frontend / backend / bitcoin* back in *january 2018*. It contains fake passwords, API keys and emtpy bitcoin addresses.
