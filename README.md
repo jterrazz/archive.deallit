@@ -1,86 +1,75 @@
-# Project
+# Deallit: Your decentralised ecommerce
 
-!!! Due to my AWS Account being closed,
-Most CDN related functionalities are not currently working
+> A social platform where you can create your own store and sell products using cryptocurrencies.
 
-Structure :
-- **api** : API written in NodeJS
-- **client-web** : VueJS Web client
-- **db: MySQL** database for development and production
-- **setup** : Instructions for AWS
+![screens.png](/Users/jterrazz/Projects/deallit-deprecated/doc/screens.png)
 
-This project contains fake passwords, fake API keys, and empty Bitcoin addresses
+This project was made when I was learning about *frontend / backend / bitcoin* back in *january 2018*. It contains fake passwords, API keys and emtpy bitcoin addresses.
 
-``` bash
-# Start with
-docker-compose up # -d for daemon
+The technologies used are
 
-# Access website on localhost:8080
-# Default credentials :
-# mail: test2@test.com
-# pwd: test
+- **Backend**: NodeJS / MySQL / Redis / Bitcoind (bitcoin-core) / ZeroMQ (bitcoin-core events) / Mocha testing / Password authentication
+
+- **Frontend**: VueJS, Less, Webpack
+
+- **Services**: AWS (S3, EC2, Lambda, RDS, ELB, Cloudfront, WAF) / Sendgrid / Namecheap / Cloudflare / Letsecrypt SSL
+
+- **Design**: Sketch
+
+## Folder structure
+
+```bash
+/api # Backend main service
+/client-web # Web app
+/db # MySQL init
+/setup # Useful commands and instructions
 ```
 
-# Technologies
+## Starting guide
 
-**Docker** for development and production
+*Since I was stupid at the time, most of the assets were saved only on CDN. Because of that some assets might not work today*
 
-**Server**
-- Node.js
-- MySQL (Aurora on AWS)
-- Redis
-- ZeroMQ (bitcoin-core events)
-- Bitcoind (bitcoin-core)
+```
+# One line start
+docker-compose up # Use -d to run in background
+```
 
-**Client**
-- VueJS
-- Less
-- Webpack
+The client is listening by default on `localhost:8080`.
 
-**Services**
-- AWS : S3, EC2, Lambda, RDS, ELB, Cloudfront, WAF
-- Sendgrid : mail API
-- DNS : namecheap + cloudflare
-- SSL : namecheap or letsencrypt
-
-**Tests**
-- Mocha
+Development credentials: `test2@test.com:test`.
 
 ---
-# Usefull commands
-### Docker development commands
-``` bash
-# Will start everything
-docker-compose up -d
 
-# Use commands
-docker-compose stop
-docker-compose start # npm install
+## Usefull commands
 
-docker logs -f CONTAINER_ID # show logs
-docker attach CONTAINER_ID # --sig-proxy=false to allow ctrl-c
-docker exec -it CONTAINER_ID "..." # /bin/sh to start new terminal
+### Docker
 
-# Clean
-docker-compose down
+```bash
+docker-compose up -d # Start every services
+docker-compose down # Stop every services
 
+docker logs -f PS_ID
+docker attach PS_ID
+docker exec -it PS_ID "..." # /bin/sh to start new terminal
+
+# Delete all ps / images
 docker rm $(docker ps -aq)
 docker rmi $(docker images -qa)
-
-# Commands for testing
-npm run test # in api folder
 ```
 
-### Docker production commands
+### Production
+
 **Build**
-``` bash
+
+```bash
 sh build-prod.sh
 # or
 sh build-prod.sh api
 ```
 
-**Deploy**
-``` bash
+**Deploy commands**
+
+```bash
 # Start
 docker swarm init # --listen-addr $(docker-machine ip node-1):2377
 docker stack deploy -c docker-compose-prod.yml --with-registry-auth STACK_NAME
@@ -104,20 +93,3 @@ docker-machine ssh myvm1 "docker swarm init --advertise-addr <myvm1 ip>"
 
 eval $(docker-machine env MANAGER_NODE) # be the manager
 ```
-
-# TODO
-
--
-- Find app for todo tasks
-- Remove temp bitcoin
-- Inscription mail
-- 2ID Page
-- Notifications
-- Store Page
-- Manage follows
-- Home UX
-- Search UX
-- Dashboard UX
-- Ratings
-- Address system
-- Go through order -> payment type -> Accept
