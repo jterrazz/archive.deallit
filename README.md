@@ -2,7 +2,7 @@
 
 > A social platform where you can create your own store and sell products using cryptocurrencies.
 
-This project was made when I was learning about *frontend / backend / bitcoin* back in *january 2018*. It contains fake passwords, API keys and emtpy bitcoin addresses.
+This project was made when I was learning about *frontend / backend / bitcoin* back in *january 2018*.
 
 The technologies used are
 
@@ -38,7 +38,7 @@ The technologies used are
 docker-compose up # Use -d to run in background
 ```
 
-The client is listening by default on `localhost:8080`.
+The client is listening by default on `localhost:8080`. On the development environment, the project has default passwords and testing bitcoin addresses.
 
 Development credentials: `test2@test.com:test`.
 
