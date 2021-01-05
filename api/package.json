@@ -17,7 +17,7 @@
     "@sendgrid/mail": "^6.2.1",
     "assert": "^1.4.1",
     "aws-sdk": "^2.181.0",
-    "axios": "^0.17.1",
+    "axios": "^0.21.1",
     "bcryptjs": "^2.4.3",
     "bitcoin-core": "^2.0.0",
     "bitcoinjs-lib": "^3.3.2",
