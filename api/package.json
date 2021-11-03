@@ -43,7 +43,7 @@
     "socket.io": "^2.0.4",
     "speakeasy": "^2.0.0",
     "stats-lite": "^2.1.0",
-    "validator": "^9.2.0",
+    "validator": "^13.7.0",
     "winston": "^2.4.0"
   },
   "devDependencies": {
